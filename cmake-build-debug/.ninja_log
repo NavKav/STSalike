@@ -1,0 +1,18 @@
+# ninja log v6
+6	3044	7677321541056474	CMakeFiles/Dice_Game_Project.dir/src/core/Window.cpp.obj	e5c693b580ed5e72
+14	2077	7677331541140392	CMakeFiles/Dice_Game_Project.dir/src/game/context/Game.cpp.obj	1e198b8a0480ba6c
+4187	4468	7677321582868514	CMakeFiles/Dice_Game_Project.dir/src/util/Pair.cpp.obj	5a04c26f57cd4f64
+3	2561	7677321541024637	CMakeFiles/Dice_Game_Project.dir/src/core/Player.cpp.obj	f421640f48701156
+4160	6160	7677321582602467	CMakeFiles/Dice_Game_Project.dir/src/util/FrameRate.cpp.obj	6019f7496478c46c
+2	258	7677336036819936	build.ninja	b43ed47e51194750
+21	4393	7677321541205045	CMakeFiles/Dice_Game_Project.dir/src/game/context/GameWindowContent.cpp.obj	7640da8e60181cc7
+2078	2725	7677331561778289	Dice_Game_Project.exe	2b3d24cef00317fd
+24	2082	7677329329822660	CMakeFiles/Dice_Game_Project.dir/src/main.cpp.obj	db930e2b80325678
+31	404	7677336054065653	CMakeFiles/Dice_Game_Project.dir/src/util/Pair.cpp.obj	5a04c26f57cd4f64
+13	1442	7677336053885896	CMakeFiles/Dice_Game_Project.dir/src/core/Player.cpp.obj	f421640f48701156
+27	1460	7677336054032424	CMakeFiles/Dice_Game_Project.dir/src/util/FrameRate.cpp.obj	6019f7496478c46c
+16	1694	7677336053917404	CMakeFiles/Dice_Game_Project.dir/src/core/Window.cpp.obj	e5c693b580ed5e72
+14	1263	7677336422312068	CMakeFiles/Dice_Game_Project.dir/src/game/context/Game.cpp.obj	1e198b8a0480ba6c
+17	1268	7677336422342083	CMakeFiles/Dice_Game_Project.dir/src/game/context/GameWindowContent.cpp.obj	7640da8e60181cc7
+19	1429	7677336422367128	CMakeFiles/Dice_Game_Project.dir/src/main.cpp.obj	db930e2b80325678
+1429	1685	7677336436461604	Dice_Game_Project.exe	83c771655f432ba4

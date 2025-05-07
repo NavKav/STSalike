@@ -13,7 +13,7 @@ class Player;
 
 class WindowContent {
 public :
-    virtual void process(Player& player, Window& window) = 0;
+    virtual void process() = 0;
 };
 
 

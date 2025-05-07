@@ -10,7 +10,7 @@
 
 class Game {
 public :
-    void process(Player& player, Window& window);
+    void process();
 private :
     FrameRate _frameRate;
 };

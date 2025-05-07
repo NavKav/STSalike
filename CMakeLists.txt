@@ -32,7 +32,9 @@ file(GLOB_RECURSE SOURCES
         src/*/*/*/*/*.cpp
         )
 
-add_executable(Dice_Game_Project ${SOURCES})
+add_executable(Dice_Game_Project ${SOURCES}
+        src/game/menu/MenuWindowContent.cpp
+        src/game/menu/MenuWindowContent.h)
 #TFF
 include_directories(${PROJECT_SOURCE_DIR}/src ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR}) #inclusion des dossier nécessaire pour le
 #développement avec SDL2

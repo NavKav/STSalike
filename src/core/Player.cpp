@@ -16,7 +16,7 @@ void Player::start() {
     while(_boolLoop) {
         SDL_Event input;
         while(SDL_PollEvent(&input)){takeInput(input);}
-        if (_windowContent) {_windowContent->process(*this, _window);}
+        if (_windowContent) {_windowContent->process();}
     }
 }
 

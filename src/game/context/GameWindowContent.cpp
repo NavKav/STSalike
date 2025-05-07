@@ -6,6 +6,6 @@
 
 using namespace std;
 
-void GameWindowContent::process(Player& player, Window& window) {
-    _game.process(player, window);
+void GameWindowContent::process() {
+    _game.process();
 }

@@ -12,7 +12,7 @@
 
 class GameWindowContent : public WindowContent {
 public :
-    void process(Player& player, Window& window) override;
+    void process() override;
 private :
     Game _game;
 

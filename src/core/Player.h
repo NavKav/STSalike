@@ -37,5 +37,6 @@ private :
     Window& _window;
 };
 
+inline Player player(window, nullptr);
 
 #endif //PROJECTTT_PLAYER_H

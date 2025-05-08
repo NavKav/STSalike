@@ -10,8 +10,10 @@
 
 class Game {
 public :
+    Game();
     void process();
 private :
+
     FrameRate _frameRate;
 };
 

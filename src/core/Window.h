@@ -60,6 +60,6 @@ private :
 
 };
 
-inline Window window("ARPG_StoryBoard", 32 * 40, 32 * 24);
+inline Window window("STS Alike", 32 * 40, 32 * 24);
 
 #endif //PROJECTTT_WINDOW_H

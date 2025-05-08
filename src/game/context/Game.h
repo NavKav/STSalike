@@ -5,6 +5,7 @@
 #ifndef ARPG_STORYBOARD_GAME_H
 #define ARPG_STORYBOARD_GAME_H
 
+#include <online/Client.h>
 #include "core/Player.h"
 #include "util/FrameRate.h"
 
@@ -13,6 +14,8 @@ public :
     Game();
     void process();
 private :
+
+    Client _client;
 
     FrameRate _frameRate;
 };

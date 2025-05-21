@@ -36,7 +36,6 @@ public :
     unsigned int getY() const;
     unsigned int getX() const;
     void textSizeOf(std::string s, int& w, int& h);
-    void shift(int x, int y);
 private :
     SDL_Texture* _backgroundTexture = nullptr;
     SDL_Texture* _defaultTexture = nullptr;
@@ -57,9 +56,10 @@ private :
     void drawIMG(const string &name, int x, int y);
     void drawPartIMG(const string &name, int x, int y, unsigned int a, unsigned int b, unsigned int c, unsigned int d);
     void open(string file);
+    void shift(int x, int y);
 
 };
 
-inline Window window("STS Alike", 32 * 40, 32 * 24);
+inline Window window("STS Alike", 1000, 1000);
 
 #endif //PROJECTTT_WINDOW_H

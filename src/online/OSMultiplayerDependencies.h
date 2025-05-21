@@ -5,7 +5,7 @@
 #ifndef ARPG_STORYBOARD_OSDEPENDENCIES_H
 #define ARPG_STORYBOARD_OSDEPENDENCIES_H
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(_WIN64)
 #define OS_WINDOWS
 #elif defined(__linux__)
 #define OS_LINUX
@@ -18,6 +18,7 @@
 
 #ifdef OS_WINDOWS
 #include <winsock2.h>
+#include <windows.h>
 #include <iostream>
 
 inline void socketInitialisation() {
@@ -34,7 +35,7 @@ inline std::string getSocketError() {
     return std::to_string( WSAGetLastError());
 }
 
-inline void closeSocket(SOCKET socket) {
+inline void disconnectSocket(SOCKET socket) {
     closesocket(socket);
     WSACleanup();
 }
@@ -50,9 +51,8 @@ inline std::string getSocketError() {
 }
 
 inline void closeSocket(SOCKET socket) {
+    close(socket)
 }
-
-#else
 
 #endif
 

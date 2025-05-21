@@ -7,32 +7,63 @@
 using namespace std;
 
 Server::Server(int port) {
-    // initialise winsock
+    // Initialise Winsock
     socketInitialisation();
-    // create a socket
-    if ((_serverSocket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
-        cout << "Could not create socket: " << getSocketError() << endl;
-        exit(-1);
+
+    // --- Création socket UDP ---
+    _udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (_udpSocket == INVALID_SOCKET) {
+        std::cout << "Could not create UDP socket: " << getSocketError() << std::endl;
+        exit(EXIT_FAILURE);
     }
 
-    // prepare the sockaddr_in structure
+    // --- Création socket TCP ---
+    _tcpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (_tcpSocket == INVALID_SOCKET) {
+        std::cout << "Could not create TCP socket: " << getSocketError() << std::endl;
+        disconnectSocket(_udpSocket);
+        exit(EXIT_FAILURE);
+    }
+
+    // Configuration de l'adresse commune
+    memset(&_server, 0, sizeof(_server));
     _server.sin_family = AF_INET;
     _server.sin_addr.s_addr = INADDR_ANY;
     _server.sin_port = htons(port);
 
-    // bind
-    if (bind(_serverSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
-        cout <<"Bind failed with error code: "<< getSocketError() << endl;
+    // --- Bind UDP ---
+    if (bind(_udpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
+        std::cout << "Bind UDP failed with error code: " << getSocketError() << std::endl;
+        disconnectSocket(_udpSocket);
+        disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
-    puts("Bind done.");
+
+    // --- Bind TCP ---
+    if (bind(_tcpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
+        std::cout << "Bind TCP failed with error code: " << getSocketError() << std::endl;
+        disconnectSocket(_udpSocket);
+        disconnectSocket(_tcpSocket);
+        exit(EXIT_FAILURE);
+    }
+
+    // --- Mise en écoute TCP ---
+    if (listen(_tcpSocket, SOMAXCONN) == SOCKET_ERROR) {
+        std::cout << "Listen failed with error code: " << getSocketError() << std::endl;
+        disconnectSocket(_udpSocket);
+        disconnectSocket(_tcpSocket);
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "Server ready: listening on port " << port << " (TCP & UDP)" << std::endl;
 }
 
 Server::~Server() {
-    closeSocket(_serverSocket);
+    disconnectSocket(_tcpSocket);
+    disconnectSocket(_udpSocket);
 }
 
-void Server::start() {
+void Server::start() const {
     /*************************************************************************/
     /*************************  INDEX  ***************************************/
     /*************************************************************************/
@@ -55,26 +86,58 @@ void Server::start() {
 
     }*/
 
-    printf("Waiting for data...");
-    //fflush(stdout);
-    char message[512] = {};
+    fd_set readfds;
+    char buffer[512];
+    sockaddr_in clientAddr;
+    int addrLen = sizeof(clientAddr);
 
+    std::cout << "Serveur en attente de messages..." << std::endl;
 
-    int slen = sizeof(sockaddr_in);
     while (true) {
-        if ((recvfrom(_serverSocket, message, 512, 0, (sockaddr *) &_client, &slen)) == SOCKET_ERROR) {
-            printf("recvfrom() failed with error code: %d", WSAGetLastError());
-            exit(0);
+        FD_ZERO(&readfds);
+        FD_SET(_udpSocket, &readfds);
+        FD_SET(_tcpSocket, &readfds);
+        SOCKET maxSocket = std::max(_udpSocket, _tcpSocket);
+
+        // Attente d'activité sur l'un des deux sockets
+        int activity = select(0, &readfds, nullptr, nullptr, nullptr);
+        if (activity == SOCKET_ERROR) {
+            std::cerr << "select() error: " << getSocketError() << std::endl;
+            break;
         }
 
-        printf("Received packet from %s:%d\n", inet_ntoa(_client.sin_addr), ntohs(_client.sin_port));
-        printf("Data: %s\n", message);
+        // --- UDP ---
+        if (FD_ISSET(_udpSocket, &readfds)) {
+            memset(buffer, 0, sizeof(buffer));
+            int bytesReceived = recvfrom(_udpSocket, buffer, sizeof(buffer) - 1, 0,
+                                         (sockaddr*)&clientAddr, &addrLen);
+            if (bytesReceived > 0) {
+                buffer[bytesReceived] = '\0';
+                std::cout << "[UDP] " << buffer << std::endl;
+            }
+        }
+
+        // --- TCP (nouvelle connexion) ---
+        if (FD_ISSET(_tcpSocket, &readfds)) {
+            SOCKET clientSocket = accept(_tcpSocket, (sockaddr*)&clientAddr, &addrLen);
+            if (clientSocket == INVALID_SOCKET) {
+                std::cerr << "accept() failed: " << getSocketError() << std::endl;
+                continue;
+            }
+
+            std::cout << "[TCP] Client connecté." << std::endl;
+
+            // Lire les messages du client TCP
+            while (true) {
+                memset(buffer, 0, sizeof(buffer));
+                int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+                if (bytesReceived <= 0) break; // client déconnecté
+                buffer[bytesReceived] = '\0';
+                std::cout << "[TCP] " << buffer << std::endl;
+            }
+
+            std::cout << "[TCP] Client déconnecté." << std::endl;
+            disconnectSocket(clientSocket);
+        }
     }
-
-
-    // reply to the client with the same data
-    /*if (sendto(_serverSocket, message, strlen(message), 0, (sockaddr*)&_client, sizeof(sockaddr_in)) == SOCKET_ERROR) {
-        printf("sendto() failed with error code: %d", WSAGetLastError());
-        exit(EXIT_FAILURE);
-    }*/
 }

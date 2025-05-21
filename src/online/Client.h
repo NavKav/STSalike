@@ -11,11 +11,12 @@ class Client {
 public:
     Client(int port, const std::string& ip);
     ~Client();
-    void send(std::string s);
+    void sendTCP(const std::string& s) const;
+    void sendUDP(const std::string& s);
 
 private:
-    SOCKET _clientSocket;
-    sockaddr_in _server;
+    SOCKET _udpSocket, _tcpSocket;
+    sockaddr_in _server{};
 };
 
 

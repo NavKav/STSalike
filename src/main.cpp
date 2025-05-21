@@ -10,6 +10,7 @@ using namespace std;
 
 #include <string>
 #include <filesystem>
+
 using namespace std::filesystem;
 
 
@@ -24,10 +25,12 @@ int main( int argc, char *argv[] )
         return 0;
     }
 
+    system(("start \"STSalike Server console\" cmd /k \"" + std::string(argv[0]) + " _server < nul\"").c_str());
+
     // (32 x 40) x (32 x 24)
     //player.setWindowContent(new MenuWindowContent());
     //player.setWindowContent(new OptionWindowContent());
-    player.setWindowContent(new GameWindowContent());
-    player.start();
+    user.setWindowContent(new GameWindowContent());
+    user.start();
     return 0;
 }

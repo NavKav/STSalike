@@ -16,11 +16,12 @@ class Server {
 public:
     Server(int port);
     ~Server();
-    void start();
+    void start() const;
 
 private :
-    SOCKET _serverSocket;
-    sockaddr_in _server{}, _client{};
+    SOCKET _udpSocket;
+    SOCKET _tcpSocket;
+    sockaddr_in _server;
 };
 
 #endif //ARPG_STORYBOARD_SERVER_H

@@ -8,6 +8,7 @@
 #include <online/Client.h>
 #include "core/Player.h"
 #include "util/FrameRate.h"
+#include "util/PerlinNoise.h"
 
 class Game {
 public :
@@ -16,6 +17,8 @@ public :
 private :
 
     Client _client;
+
+    PerlinNoise _perlinNoise;
 
     FrameRate _frameRate;
 };

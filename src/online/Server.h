@@ -1,24 +1,28 @@
 //
-// Created by navid on 18/03/2024.
+// Created by NavKav on 18/03/2024.
 //
 
 #ifndef ARPG_STORYBOARD_SERVER_H
 #define ARPG_STORYBOARD_SERVER_H
 
-#include <iostream>
+#include <map>
+
 #include "OSMultiplayerDependencies.h"
-#include "core/Player.h"
-#include "util/FrameRate.h"
+#include "core/User.h"
+#include "ClientSocket.h"
 
 
+class ClientSocket;
 
 class Server {
 public:
     Server(int port);
     ~Server();
-    void start() const;
+    void start();
 
-private :
+    private :
+
+    std::map<SOCKET, std::unique_ptr<ClientSocket>> _connectedTcpClients;
     SOCKET _udpSocket;
     SOCKET _tcpSocket;
     sockaddr_in _server;

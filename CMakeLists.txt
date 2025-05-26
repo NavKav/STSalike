@@ -34,7 +34,11 @@ file(GLOB_RECURSE SOURCES
 
 add_executable(STSalike ${SOURCES}
         src/game/menu/MenuWindowContent.cpp
-        src/game/menu/MenuWindowContent.h)
+        src/game/menu/MenuWindowContent.h
+        src/util/OSCommandDependencies.h
+        src/online/ClientSocket.cpp
+        src/online/ClientSocket.h
+)
 #TFF
 include_directories(${PROJECT_SOURCE_DIR}/src ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR}) #inclusion des dossier nécessaire pour le
 #développement avec SDL2

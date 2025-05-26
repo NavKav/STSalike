@@ -1,5 +1,5 @@
 //
-// Created by navid on 23/01/2023.
+// Created by NavKav on 23/01/2023.
 //
 
 #include "Game.h"
@@ -44,7 +44,13 @@ void Game::process() {
     /*************************************************************************/
     _frameRate.display(window);
     window.refresh();
-    //_client.sendTCP("salut");
-    _client.sendUDP("idem");
+    if (user[SDL_SCANCODE_SPACE].pressed) {
+        _client.sendTCP("a appuye sur espace");
+        _client.sendUDP("a appuye sur espace");
+    }
+    if (user[SDL_SCANCODE_Q].pressed) {
+        _client.sendTCP("a appuye sur A");
+        _client.sendUDP("a appuye sur A");
+    }
     //user.waitAnyKeyThenClose();
 }

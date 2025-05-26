@@ -1,5 +1,5 @@
 //
-// Created by navid on 13/05/2021.
+// Created by NavKav on 13/05/2021.
 //
 
 #ifndef PROJECTTT_WINDOW_H
@@ -36,6 +36,7 @@ public :
     unsigned int getY() const;
     unsigned int getX() const;
     void textSizeOf(std::string s, int& w, int& h);
+    void close();
 private :
     SDL_Texture* _backgroundTexture = nullptr;
     SDL_Texture* _defaultTexture = nullptr;

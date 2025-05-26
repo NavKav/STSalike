@@ -1,5 +1,5 @@
 //
-// Created by navid on 18/08/2021.
+// Created by NavKav on 18/08/2021.
 //
 
 #ifndef DICE_GAME_PROJECT_REQUIREMENT_H

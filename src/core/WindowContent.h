@@ -1,5 +1,5 @@
 //
-// Created by navid on 29/08/2021.
+// Created by NavKav on 29/08/2021.
 //
 
 #ifndef DICE_GAME_PROJECT_WINDOWCONTENT_H
@@ -9,7 +9,7 @@
 #include "Input.h"
 #include "Window.h"
 
-class Player;
+class User;
 
 class WindowContent {
 public :

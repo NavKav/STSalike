@@ -1,5 +1,5 @@
 //
-// Created by navid on 04/06/2021.
+// Created by NavKav on 04/06/2021.
 //
 /*
  * Player source of inputs Class. Manage events from the launching computer.
@@ -29,6 +29,7 @@ public :
     void setWindowContent(WindowContent *windowContent);
     void waitAnyKey();
     void waitAnyKeyThenClose();
+	void close();
 
 private :
     bool _boolLoop = true;

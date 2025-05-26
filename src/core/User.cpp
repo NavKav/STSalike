@@ -1,8 +1,8 @@
 //
-// Created by navid on 15/08/2021.
+// Created by NavKav on 15/08/2021.
 //
 
-#include "Player.h"
+#include "User.h"
 
 using namespace std;
 
@@ -100,6 +100,10 @@ void User::waitAnyKey() {
 
 void User::waitAnyKeyThenClose() {
     waitAnyKey();
+    stop();
+}
+
+void User::close() {
     stop();
 }
 

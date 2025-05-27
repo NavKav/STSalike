@@ -65,7 +65,7 @@ Server::~Server() {
 void Server::start() {
     fd_set readfds;
     char buffer[512];
-    sockaddr_in clientAddr;
+    sockaddr_in clientAddr{};
     int addrLen;
 
     std::cout << "Serveur en attente de messages..." << std::endl;
@@ -96,7 +96,7 @@ void Server::start() {
 
         if (activity == SOCKET_ERROR) {
             std::cerr << "select() error: " << getSocketError() << std::endl;
-            break;
+            continue;
         }
 
 
@@ -106,16 +106,8 @@ void Server::start() {
 
         if (FD_ISSET(_udpSocket, &readfds)) {
             memset(buffer, 0, sizeof(buffer));
-            int bytesReceived = recvfrom(_udpSocket, buffer, sizeof(buffer) - 1, 0,
-                                         (sockaddr*)&clientAddr, &addrLen);
-            if (bytesReceived > 0) {
-                buffer[bytesReceived] = '\0';
-                std::cout << "[UDP] Message de " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << " : " << buffer << std::endl;
-            } else if (bytesReceived == 0) {
-                std::cout << "[UDP] Erreur ou message vide reçu." << std::endl;
-            } else {
-                std::cerr << "[UDP] recvfrom() error: " << getSocketError() << std::endl;
-            }
+            int bytesReceived = recvfrom(_udpSocket, buffer, sizeof(buffer) - 1, 0,(sockaddr*)&clientAddr, &addrLen);
+            udpPacketHandling(clientAddr, bytesReceived, buffer);
         }
 
         /*************************************************************************/
@@ -124,58 +116,77 @@ void Server::start() {
 
         if (FD_ISSET(_tcpSocket, &readfds)) {
             SOCKET newClientSocket = accept(_tcpSocket, (sockaddr*)&clientAddr, &addrLen);
-            if (newClientSocket == INVALID_SOCKET) {
-                std::cerr << "accept() failed: " << getSocketError() << std::endl;
+            if(tcpAcceptanceHandling(newClientSocket, clientAddr))
                 continue;
-            }
-
-            std::cout << "[TCP] Nouvelle connexion acceptée depuis "
-                      << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << std::endl;
-
-            _connectedTcpClients[newClientSocket] = std::make_unique<ClientSocket>(
-                    newClientSocket, clientAddr, _udpSocket, sockaddr_in{}, "Client" + std::to_string(newClientSocket)
-            );
-
-            _connectedTcpClients[newClientSocket]->displayClientInfo();
         }
 
         /*************************************************************************/
         /*************************  TCP HANDLING  ********************************/
         /*************************************************************************/
 
-        std::vector<SOCKET> clientsToProcess;
         for (auto const& pair : _connectedTcpClients) {
-            clientsToProcess.push_back(pair.first);
+            _clientsToProcess.push_back(pair.first);
         }
 
-        for (SOCKET clientSock : clientsToProcess) {
+        for (SOCKET clientSock : _clientsToProcess) {
             if (FD_ISSET(clientSock, &readfds)) {
                 memset(buffer, 0, sizeof(buffer));
                 int bytesReceived = recv(clientSock, buffer, sizeof(buffer) - 1, 0);
-
-                if (bytesReceived > 0) {
-                    buffer[bytesReceived] = '\0';
-                    if (_connectedTcpClients.count(clientSock)) {
-                        std::cout << "[TCP] Message de " << _connectedTcpClients[clientSock]->_name << " ("
-                                  << inet_ntoa(_connectedTcpClients[clientSock]->_tcpAddr.sin_addr) << ":"
-                                  << ntohs(_connectedTcpClients[clientSock]->_tcpAddr.sin_port) << ") : "
-                                  << buffer << std::endl;
-                    }
-                } else if (bytesReceived == 0) {
-                    std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_name << " déconnecté." << std::endl;
-                    disconnectSocket(clientSock);
-                    _connectedTcpClients.erase(clientSock);
-                } else {
-                    string errCode = getSocketError();
-                    if (errCode == "0") {
-                        std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_name << " déconnecté de force (reset)." << std::endl;
-                    } else {
-                        std::cerr << "[TCP] recv() error on socket " << clientSock << ": " << errCode << std::endl;
-                    }
-                    disconnectSocket(clientSock);
-                    _connectedTcpClients.erase(clientSock);
-                }
+                tcpPacketHandling(clientSock, bytesReceived, buffer);
             }
         }
     }
+}
+
+void Server::udpPacketHandling(sockaddr_in clientAddr, int bytesReceived, char* buffer) {
+    if (bytesReceived > 0) {
+        buffer[bytesReceived] = '\0';
+        std::cout << "[UDP] Message de " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << " : " << buffer << std::endl;
+    } else if (bytesReceived == 0) {
+        std::cout << "[UDP] Erreur ou message vide reçu. (" << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << ")" << std::endl;
+    } else {
+        std::cerr << "[UDP] recvfrom() error: " << getSocketError() << " (" << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << ")" << std::endl;
+    }
+}
+
+void Server::tcpPacketHandling(SOCKET clientSock, int bytesReceived, char *buffer) {
+    if (bytesReceived > 0) {
+        buffer[bytesReceived] = '\0';
+        if (_connectedTcpClients.count(clientSock)) {
+            std::cout << "[TCP] Message de " << _connectedTcpClients[clientSock]->_name << " ("
+                      << inet_ntoa(_connectedTcpClients[clientSock]->_tcpAddr.sin_addr) << ":"
+                      << ntohs(_connectedTcpClients[clientSock]->_tcpAddr.sin_port) << ") : "
+                      << buffer << std::endl;
+        }
+    } else if (bytesReceived == 0) {
+        std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_name << " déconnecté." << std::endl;
+        disconnectSocket(clientSock);
+        _connectedTcpClients.erase(clientSock);
+    } else {
+        string errCode = getSocketError();
+        if (errCode == "0") {
+            std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_name << " déconnecté de force (reset)." << std::endl;
+        } else {
+            std::cerr << "[TCP] recv() error on socket " << clientSock << ": " << errCode << std::endl;
+        }
+        disconnectSocket(clientSock);
+        _connectedTcpClients.erase(clientSock);
+    }
+}
+
+bool Server::tcpAcceptanceHandling(SOCKET newClientSocket, sockaddr_in clientAddr) {
+    if (newClientSocket == INVALID_SOCKET) {
+        std::cerr << "accept() failed: " << getSocketError() << std::endl;
+        return false;
+    }
+
+    std::cout << "[TCP] Nouvelle connexion acceptée depuis "
+              << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << std::endl;
+
+    _connectedTcpClients[newClientSocket] = std::make_unique<ClientSocket>(
+            newClientSocket, clientAddr, _udpSocket, sockaddr_in{}, "Client" + std::to_string(newClientSocket)
+    );
+
+    _connectedTcpClients[newClientSocket]->displayClientInfo();
+    return true;
 }

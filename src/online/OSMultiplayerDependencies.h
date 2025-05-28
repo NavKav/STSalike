@@ -31,8 +31,8 @@ inline void socketInitialisation() {
     std::cout << "Initialised." << std::endl;
 }
 
-inline std::string getSocketError() {
-    return std::to_string(WSAGetLastError());
+inline int getSocketError() {
+    return WSAGetLastError();
 }
 
 inline void disconnectSocket(Socket socket) {
@@ -53,8 +53,8 @@ inline void socketInitialisation() {
     std::cout << "Socket Initialised." << std::endl;
 }
 
-inline std::string getSocketError() {
-    return strerror(errno);
+inline int getSocketError() {
+    return errno;
 }
 
 inline void disconnectSocket(Socket socket) {

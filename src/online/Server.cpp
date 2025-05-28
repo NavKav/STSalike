@@ -66,16 +66,16 @@ void Server::start() {
     fd_set readfds;
     char buffer[512];
     sockaddr_in clientAddr{};
-    int addrLen;
 
     std::cout << "Serveur en attente de messages..." << std::endl;
 
     while (true) {
-        addrLen = sizeof(clientAddr);
-        memset(&clientAddr, 0, addrLen);
+        _addrLen = sizeof(clientAddr);
+        memset(&clientAddr, 0, _addrLen);
+        _clientsToProcess.clear();
 
         /*************************************************************************/
-        /***********************  READINESS SOCKET  ******************************/
+        /*************************  MULTIPLEXING  ********************************/
         /*************************************************************************/
 
         FD_ZERO(&readfds);
@@ -106,7 +106,7 @@ void Server::start() {
 
         if (FD_ISSET(_udpSocket, &readfds)) {
             memset(buffer, 0, sizeof(buffer));
-            int bytesReceived = recvfrom(_udpSocket, buffer, sizeof(buffer) - 1, 0,(sockaddr*)&clientAddr, &addrLen);
+            int bytesReceived = recvfrom(_udpSocket, buffer, sizeof(buffer) - 1, 0,(sockaddr*)&clientAddr, &_addrLen);
             udpPacketHandling(clientAddr, bytesReceived, buffer);
         }
 
@@ -115,7 +115,7 @@ void Server::start() {
         /*************************************************************************/
 
         if (FD_ISSET(_tcpSocket, &readfds)) {
-            SOCKET newClientSocket = accept(_tcpSocket, (sockaddr*)&clientAddr, &addrLen);
+            SOCKET newClientSocket = accept(_tcpSocket, (sockaddr*)&clientAddr, &_addrLen);
             if(tcpAcceptanceHandling(newClientSocket, clientAddr))
                 continue;
         }
@@ -163,8 +163,8 @@ void Server::tcpPacketHandling(SOCKET clientSock, int bytesReceived, char *buffe
         disconnectSocket(clientSock);
         _connectedTcpClients.erase(clientSock);
     } else {
-        string errCode = getSocketError();
-        if (errCode == "0") {
+        int errCode = getSocketError();
+        if (errCode == 0) {
             std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_name << " déconnecté de force (reset)." << std::endl;
         } else {
             std::cerr << "[TCP] recv() error on socket " << clientSock << ": " << errCode << std::endl;

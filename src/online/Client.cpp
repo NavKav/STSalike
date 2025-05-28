@@ -44,8 +44,8 @@ Client::Client(int port, const string& ip) {
             break; // Succès
         }
 
-        string err = getSocketError();
-        if (!err.empty()) {
+        int err = getSocketError();
+        if (err != 0) {
             std::cout << "Connexion refusée, nouvelle tentative..." << std::endl;
             Sleep(500);
             attempts++;

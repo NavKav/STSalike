@@ -46,10 +46,8 @@ void Game::process() {
     window.refresh();
     if (user[SDL_SCANCODE_SPACE].pressed) {
         _client.sendTCP("a appuye sur espace");
-        _client.sendUDP("a appuye sur espace");
     }
     if (user[SDL_SCANCODE_Q].pressed) {
-        _client.sendTCP("a appuye sur A");
         _client.sendUDP("a appuye sur A");
     }
     //user.waitAnyKeyThenClose();

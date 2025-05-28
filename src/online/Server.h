@@ -6,6 +6,7 @@
 #define ARPG_STORYBOARD_SERVER_H
 
 #include <map>
+#include <vector>
 
 #include "OSMultiplayerDependencies.h"
 #include "core/User.h"
@@ -25,11 +26,12 @@ public:
     private :
 
     std::map<SOCKET, std::unique_ptr<ClientSocket>> _connectedTcpClients;
-    std::vector<SOCKET> _clientsToProcess;;
+    std::vector<SOCKET> _clientsToProcess;
 
     SOCKET _udpSocket;
     SOCKET _tcpSocket;
     sockaddr_in _server;
+    int _addrLen;
 };
 
 #endif //ARPG_STORYBOARD_SERVER_H

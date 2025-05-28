@@ -18,7 +18,7 @@ int main( int argc, char *argv[] )
 {
     if (argc == 2 && !strcmp(argv[1], "_server")) {
         window.close();
-        user.~User();
+        user.close();
 
         Server server(1998);
         server.start();
@@ -32,7 +32,7 @@ int main( int argc, char *argv[] )
     // (32 x 40) x (32 x 24)
     //player.setWindowContent(new MenuWindowContent());
     //player.setWindowContent(new OptionWindowContent());
-    user.setWindowContent(new GameWindowContent());
+    user.setWindowContent(new MenuWindowContent());
     user.start();
     return 0;
 }

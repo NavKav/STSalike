@@ -1,5 +1,5 @@
 //
-// Created by navid on 03/09/2021.
+// Created by NavKav on 03/09/2021.
 //
 
 #ifndef DICE_GAME_PROJECT_INPUT_H

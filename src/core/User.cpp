@@ -1,17 +1,17 @@
 //
-// Created by navid on 15/08/2021.
+// Created by NavKav on 15/08/2021.
 //
 
-#include "Player.h"
+#include "User.h"
 
 using namespace std;
 
-Player::Player(Window& window, WindowContent* windowContent) : _windowContent(windowContent),
+User::User(Window& window, WindowContent* windowContent) : _windowContent(windowContent),
 _window(window)
 {
 }
 
-void Player::start() {
+void User::start() {
     unsigned int i= 0;
     while(_boolLoop) {
         SDL_Event input;
@@ -20,16 +20,16 @@ void Player::start() {
     }
 }
 
-void Player::stop() {
+void User::stop() {
     _boolLoop = false;
 }
 
 
-Player::~Player() {
+User::~User() {
     if (_windowContent) {delete _windowContent;}
 }
 
-bool Player::takeInput(const SDL_Event &event) {
+bool User::takeInput(const SDL_Event &event) {
     if (event.type == SDL_QUIT || event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
         stop();
         return true;
@@ -72,17 +72,39 @@ bool Player::takeInput(const SDL_Event &event) {
     return false;
 }
 
-Input Player::operator[](unsigned int i) {
+Input User::operator[](unsigned int i) {
     return _inputArr[i];
 }
 
-void Player::getMousePosition(int& x, int& y) {
+void User::getMousePosition(int& x, int& y) {
     SDL_GetMouseState(&x, &y);
 }
 
-void Player::setWindowContent(WindowContent *windowContent) {
+void User::setWindowContent(WindowContent *windowContent) {
     if (_windowContent) {delete _windowContent;}
     _windowContent = windowContent;
+}
+
+void User::waitAnyKey() {
+    SDL_Event event;
+    bool key_pressed = false;
+    while (!key_pressed) {
+        SDL_WaitEvent(&event);
+        if (event.type == SDL_KEYDOWN) {
+            key_pressed = true;
+        } else if (event.type == SDL_QUIT) {
+            break;
+        }
+    }
+}
+
+void User::waitAnyKeyThenClose() {
+    waitAnyKey();
+    stop();
+}
+
+void User::close() {
+    stop();
 }
 
 

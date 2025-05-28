@@ -1,10 +1,15 @@
 //
-// Created by navid on 23/01/2023.
+// Created by NavKav on 23/01/2023.
 //
 
 #include "Game.h"
 
 using namespace std;
+
+Game::Game() :
+_client(1998, "127.0.0.1") {
+
+}
 
 void Game::process() {
     /*************************************************************************/
@@ -15,16 +20,35 @@ void Game::process() {
     /*************************  INITIALIZATION  ******************************/
     /*************************************************************************/
     srand(time(NULL));
-    _frameRate.display(window);
-
 
     /*************************************************************************/
     /*************************  UNITS TESTS  *********************************/
     /*************************************************************************/
 
+    int X = window.getX(), Y = window.getY();
+
+    for (int x = - 100; x <= X + 100; x += X/7) {
+        for (int y = - 100; y <= Y + 100; y += Y/7) {
+            int b = 1+(rand()%20);
+            if ( b%2) {
+                string r = to_string(b);
+                r.length() == 1 ? r = "0"+r : r += "";
+                window.drawIMG(x - 36, y - 36, "image/monster/00" + r + ".png");
+            }
+        }
+
+    }
+
     /*************************************************************************/
     /*************************  DISPLAY **************************************/
     /*************************************************************************/
-
+    _frameRate.display(window);
     window.refresh();
+    if (user[SDL_SCANCODE_SPACE].pressed) {
+        _client.sendTCP("a appuye sur espace");
+    }
+    if (user[SDL_SCANCODE_Q].pressed) {
+        _client.sendUDP("a appuye sur A");
+    }
+    //user.waitAnyKeyThenClose();
 }

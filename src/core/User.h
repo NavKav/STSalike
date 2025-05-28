@@ -1,5 +1,5 @@
 //
-// Created by navid on 04/06/2021.
+// Created by NavKav on 04/06/2021.
 //
 /*
  * Player source of inputs Class. Manage events from the launching computer.
@@ -18,15 +18,18 @@
 #define SDL_SCANCODE_RIGHTCLICK NUM_SDLK - 1
 #define SDL_SCANCODE_LEFTCLICK NUM_SDLK - 2
 
-class Player {
+class User {
 public :
-    Player(Window& window, WindowContent* windowContent);
+    User(Window& window, WindowContent* windowContent);
     void start();
     void stop();
-    ~Player();
+    ~User();
     void getMousePosition(int& x, int& y);
     Input operator[](unsigned int i);
     void setWindowContent(WindowContent *windowContent);
+    void waitAnyKey();
+    void waitAnyKeyThenClose();
+	void close();
 
 private :
     bool _boolLoop = true;
@@ -37,6 +40,6 @@ private :
     Window& _window;
 };
 
-inline Player player(window, nullptr);
+inline User user(window, nullptr);
 
 #endif //PROJECTTT_PLAYER_H

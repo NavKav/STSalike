@@ -1,5 +1,5 @@
 //
-// Created by navid on 13/05/2021.
+// Created by NavKav on 13/05/2021.
 //
 #include "requirement.h"
 #include "Window.h"
@@ -235,6 +235,11 @@ void Window::shift(int x, int y) {
 
 void Window::textSizeOf(std::string s, int& w, int& h) {
     TTF_SizeText(_font, s.c_str(), &w, &h);
+}
+
+void Window::close() {
+    SDL_DestroyWindow(_actualWindow);
+    _actualWindow = nullptr;
 }
 
 bool Window::exists(std::string name) const {

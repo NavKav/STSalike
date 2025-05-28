@@ -14,6 +14,8 @@
 
 class ClientSocket;
 
+struct timeval TIMEOUT_SERVER = {0, 10000}; // 10ms
+
 class Server {
 public:
     Server(int port);

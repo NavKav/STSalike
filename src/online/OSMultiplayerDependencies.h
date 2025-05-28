@@ -37,6 +37,9 @@ inline int getSocketError() {
 
 inline void disconnectSocket(Socket socket) {
     closesocket(socket);
+}
+
+inline void cleanupSocket() {
     WSACleanup();
 }
 
@@ -49,9 +52,7 @@ inline void disconnectSocket(Socket socket) {
 
 using Socket = int;
 
-inline void socketInitialisation() {
-    std::cout << "Socket Initialised." << std::endl;
-}
+inline void socketInitialisation() {}
 
 inline int getSocketError() {
     return errno;
@@ -60,6 +61,8 @@ inline int getSocketError() {
 inline void disconnectSocket(Socket socket) {
     close(socket);
 }
+
+inline void cleanupSocket() {}
 
 #endif
 

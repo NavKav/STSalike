@@ -60,6 +60,7 @@ Server::Server(int port) {
 Server::~Server() {
     disconnectSocket(_tcpSocket);
     disconnectSocket(_udpSocket);
+    cleanupSocket();
 }
 
 void Server::start() {
@@ -92,7 +93,7 @@ void Server::start() {
             }
         }
 
-        int activity = select(maxSocket + 1, &readfds, nullptr, nullptr, nullptr);
+        int activity = select(maxSocket + 1, &readfds, nullptr, nullptr, &TIMEOUT_SERVER);
 
         if (activity == SOCKET_ERROR) {
             std::cerr << "select() error: " << getSocketError() << std::endl;

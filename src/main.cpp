@@ -18,7 +18,7 @@ int main( int argc, char *argv[] )
 {
     if (argc == 2 && !strcmp(argv[1], "_server")) {
         window.close();
-        user.~User();
+        user.close();
 
         Server server(1998);
         server.start();

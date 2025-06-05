@@ -33,7 +33,7 @@ int main( int argc, char *argv[] )
     // (32 x 40) x (32 x 24)
     //player.setWindowContent(new MenuWindowContent());
     //player.setWindowContent(new OptionWindowContent());
-    user.setWindowContent(new MenuWindowContent());
+    user.setWindowContent(new GameWindowContent());
     user.start();
     return 0;
 }

@@ -5,9 +5,9 @@
 #define ARPG_STORYBOARD_OSDEPENDENCIES_H
 
 #if defined(_WIN32) || defined(_WIN64)
-    #define ARPG_OS_WINDOWS
+#define ARPG_OS_WINDOWS
 #elif defined(__linux__)
-    #define ARPG_OS_LINUX
+#define ARPG_OS_LINUX
 #elif defined(__APPLE__) && defined(__MACH__)
     #define ARPG_OS_MACOS
 #else

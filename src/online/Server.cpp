@@ -70,7 +70,7 @@ void Server::start() {
 
     std::cout << "Serveur en attente de messages..." << std::endl;
 
-    while (true) {
+    while (_serverToggle) {
         _addrLen = sizeof(clientAddr);
         memset(&clientAddr, 0, _addrLen);
         _clientsToProcess.clear();
@@ -93,7 +93,7 @@ void Server::start() {
             }
         }
 
-        int activity = select(maxSocket + 1, &readfds, nullptr, nullptr, &TIMEOUT_SERVER);
+        int activity = select(maxSocket + 1, &readfds, nullptr, nullptr, nullptr);
 
         if (activity == SOCKET_ERROR) {
             std::cerr << "select() error: " << getSocketError() << std::endl;
@@ -172,6 +172,7 @@ void Server::tcpPacketHandling(SOCKET clientSock, int bytesReceived, char *buffe
         }
         disconnectSocket(clientSock);
         _connectedTcpClients.erase(clientSock);
+        if (_connectedTcpClients.empty()) _serverToggle = false;
     }
 }
 

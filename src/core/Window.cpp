@@ -174,12 +174,12 @@ void Window::changeFont(const string& name, unsigned int points) {
     _font = TTF_OpenFont(("ressource/font/" + name + ".ttf").c_str(), points);
 }
 
-void Window::changeColor( Uint8 r, Uint8 v, Uint8 b) {
-    _color = {r, v, b};
+void Window::changeTextColor(Uint8 r, Uint8 v, Uint8 b) {
+    _textColor = {r, v, b};
 }
 
 void Window::writeText(int x,int y, const string& s) {
-    SDL_Surface * text = TTF_RenderText_Solid(_font,s.c_str(), _color);
+    SDL_Surface * text = TTF_RenderText_Solid(_font, s.c_str(), _textColor);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, text);
 
     SDL_Rect p;
@@ -244,4 +244,16 @@ void Window::close() {
 
 bool Window::exists(std::string name) const {
     return !(_hashmap.find(name) == _hashmap.end());
+}
+
+void Window::drawLine(int a, int b, int c, int d) {
+    SDL_RenderDrawLine(_renderer, a, b, c, d);
+}
+
+void Window::clearBackground() {
+    SDL_RenderClear(_renderer);
+}
+
+void Window::changeDrawColor(Uint8 r, Uint8 v, Uint8 b, Uint8 a) {
+    SDL_SetRenderDrawColor(_renderer, r, v, b, a);
 }

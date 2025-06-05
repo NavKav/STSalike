@@ -10,8 +10,7 @@
 
 #define BACKGROUND (unsigned int)0
 #define DEFAULT (unsigned int)1
-
-
+#define ALPHA_OPAQUE SDL_ALPHA_OPAQUE
 
 typedef std::string string;
 typedef std::unordered_map<string, SDL_Texture*> hashmap;
@@ -32,11 +31,14 @@ public :
     bool exists(std::string name) const;
     void writeText(int x,int y, const string& s);
     void changeFont(const string& name, unsigned int points);
-    void changeColor( Uint8 r, Uint8 v, Uint8 b);
+    void changeTextColor(Uint8 r, Uint8 v, Uint8 b);
+    void changeDrawColor(Uint8 r, Uint8 v, Uint8 b, Uint8 a);
     unsigned int getY() const;
     unsigned int getX() const;
     void textSizeOf(std::string s, int& w, int& h);
     void close();
+    void drawLine(int a, int b, int c, int d);
+    void clearBackground();
 private :
     SDL_Texture* _backgroundTexture = nullptr;
     SDL_Texture* _defaultTexture = nullptr;
@@ -48,7 +50,7 @@ private :
     SDL_Renderer *_renderer;
 
     TTF_Font * _font;
-    SDL_Color _color = { 255, 255, 255 };
+    SDL_Color _textColor = {255, 255, 255 };
 
     hashmap _hashmap = hashmap();
 
@@ -61,6 +63,6 @@ private :
 
 };
 
-inline Window window("STS Alike", 1000, 1000);
+inline Window window("STS Alike", 700, 700);
 
 #endif //PROJECTTT_WINDOW_H

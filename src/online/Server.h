@@ -14,6 +14,7 @@
 
 class ClientSocket;
 
+
 class Server {
 public:
     Server(int port);
@@ -23,7 +24,7 @@ public:
     void tcpPacketHandling(SOCKET clientSock, int bytesReceived, char* buffer);
     bool tcpAcceptanceHandling(SOCKET newClientSocket, sockaddr_in clientAddr);
 
-    private :
+private :
 
     std::map<SOCKET, std::unique_ptr<ClientSocket>> _connectedTcpClients;
     std::vector<SOCKET> _clientsToProcess;
@@ -32,6 +33,8 @@ public:
     SOCKET _tcpSocket;
     sockaddr_in _server;
     int _addrLen;
+
+    bool _serverToggle = true;
 };
 
 #endif //ARPG_STORYBOARD_SERVER_H

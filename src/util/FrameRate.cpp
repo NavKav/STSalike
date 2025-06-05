@@ -21,7 +21,7 @@ void FrameRate::display(Window& window) {
         newValue = _previousValue;
     }
         window.drawOn(DEFAULT);
-        window.changeColor(255, 255, 255);
+    window.changeTextColor(255, 255, 255);
         window.changeFont("arial", 20);
         window.writeText(0, 0 , to_string(newValue) + " fps");
 

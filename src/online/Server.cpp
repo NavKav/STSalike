@@ -60,6 +60,7 @@ Server::Server(int port) {
 Server::~Server() {
     disconnectSocket(_tcpSocket);
     disconnectSocket(_udpSocket);
+    cleanupSocket();
 }
 
 void Server::start() {
@@ -69,7 +70,7 @@ void Server::start() {
 
     std::cout << "Serveur en attente de messages..." << std::endl;
 
-    while (true) {
+    while (_serverToggle) {
         _addrLen = sizeof(clientAddr);
         memset(&clientAddr, 0, _addrLen);
         _clientsToProcess.clear();
@@ -171,6 +172,7 @@ void Server::tcpPacketHandling(SOCKET clientSock, int bytesReceived, char *buffe
         }
         disconnectSocket(clientSock);
         _connectedTcpClients.erase(clientSock);
+        if (_connectedTcpClients.empty()) _serverToggle = false;
     }
 }
 

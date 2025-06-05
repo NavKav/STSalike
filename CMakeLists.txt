@@ -38,6 +38,7 @@ add_executable(STSalike ${SOURCES}
         src/util/OSCommandDependencies.h
         src/online/ClientSocket.cpp
         src/online/ClientSocket.h
+        src/online/Server.h
 )
 #TFF
 include_directories(${PROJECT_SOURCE_DIR}/src ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR}) #inclusion des dossier nécessaire pour le

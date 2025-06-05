@@ -26,7 +26,8 @@ int main( int argc, char *argv[] )
         return 0;
     }
 
-    //launchServerConsole(argv[0]);
+
+    launchServerConsole(argv[0]);
 
 
     // (32 x 40) x (32 x 24)

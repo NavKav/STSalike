@@ -1,0 +1,17 @@
+# ninja log v6
+34	330	7708465184052822	CMakeFiles/STSalike.dir/src/util/Pair.cpp.obj	107a27733c764918
+23	1936	7708465183940705	CMakeFiles/STSalike.dir/src/online/ClientSocket.cpp.obj	9d58e51daaedf893
+20	1888	7708465183903676	CMakeFiles/STSalike.dir/src/online/Client.cpp.obj	8a9c4278ee48efc1
+14	2081	7708465183845463	CMakeFiles/STSalike.dir/src/game/menu/MenuWindowContent.cpp.obj	57538839c011d6d
+3	2145	7708465183730333	CMakeFiles/STSalike.dir/src/core/User.cpp.obj	ce7674f4473c180c
+30	2234	7708465184012792	CMakeFiles/STSalike.dir/src/util/FrameRate.cpp.obj	132a177e07bc98f9
+11	2379	7708465183820324	CMakeFiles/STSalike.dir/src/game/context/GameWindowContent.cpp.obj	1401238a11a94bff
+6	2508	7708465183760309	CMakeFiles/STSalike.dir/src/core/Window.cpp.obj	c07bd1fe8ad69cb6
+17	2542	7708465183879616	CMakeFiles/STSalike.dir/src/main.cpp.obj	be0d8068a558f87d
+27	2664	7708465183980707	CMakeFiles/STSalike.dir/src/online/Server.cpp.obj	f53539f52d979d90
+8	2829	7708465183790322	CMakeFiles/STSalike.dir/src/game/context/Game.cpp.obj	2cc167f0a5eddffd
+2830	3142	7708465212001659	STSalike.exe	ebe68fc83804d4d0
+5	1433	7708465961595210	CMakeFiles/STSalike.dir/src/main.cpp.obj	be0d8068a558f87d
+1433	1722	7708465975871346	STSalike.exe	ebe68fc83804d4d0
+6	1464	7708466947919261	CMakeFiles/STSalike.dir/src/main.cpp.obj	be0d8068a558f87d
+1464	1759	7708466962499828	STSalike.exe	ebe68fc83804d4d0

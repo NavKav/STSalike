@@ -19,8 +19,6 @@
 #include <windows.h>
 #include <iostream>
 
-using Socket = SOCKET;
-
 inline void socketInitialisation() {
     WSADATA wsa;
     std::cout << "Initialising Winsock..." << std::endl;
@@ -35,7 +33,7 @@ inline int getSocketError() {
     return WSAGetLastError();
 }
 
-inline void disconnectSocket(Socket socket) {
+inline void disconnectSocket(SOCKET socket) {
     closesocket(socket);
 }
 
@@ -52,7 +50,9 @@ inline void cleanupSocket() {
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-using Socket = int;
+#define INVALID_SOCKET (-1)
+
+typedef int SOCKET;
 
 inline void socketInitialisation() {}
 

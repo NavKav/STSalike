@@ -32,7 +32,7 @@ Server::Server(int port) {
     _server.sin_port = htons(port);
 
     // --- Bind UDP ---
-    if (bind(_udpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
+    if (::bind(_udpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
         std::cout << "Bind UDP failed with error code: " << getSocketError() << std::endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
@@ -40,14 +40,14 @@ Server::Server(int port) {
     }
 
     // --- Bind TCP ---
-    if (bind(_tcpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
+    if (::bind(_tcpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
         std::cout << "Bind TCP failed with error code: " << getSocketError() << std::endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
-    if (listen(_tcpSocket, SOMAXCONN) == SOCKET_ERROR) {
+    if (::listen(_tcpSocket, SOMAXCONN) == SOCKET_ERROR) {
         std::cout << "Listen failed with error code: " << getSocketError() << std::endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
@@ -198,7 +198,7 @@ void Server::tcpPacketHandling(SOCKET clientSock, int bytesReceived) {
 }
 
 bool Server::tcpAcceptanceHandling(sockaddr_in& clientAddr) {
-    SOCKET newClientSocket = accept(_tcpSocket, (sockaddr*)&clientAddr, &_addrLen);
+    SOCKET newClientSocket = ::accept(_tcpSocket, (sockaddr*)&clientAddr, &_addrLen);
 
     if (newClientSocket == INVALID_SOCKET) {
         std::cerr << "accept() failed: " << getSocketError() << std::endl;

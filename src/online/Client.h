@@ -6,6 +6,8 @@
 #define ARPG_STORYBOARD_CLIENT_H
 
 #include "OSMultiplayerDependencies.h"
+#include <thread>
+#include <chrono>
 
 class Client {
 public:

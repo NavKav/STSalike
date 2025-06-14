@@ -10,7 +10,7 @@
 
 class ClientSocket {
 public:
-    ClientSocket(SOCKET tcpSocket, const sockaddr_in& tcpAddr, SOCKET udpSocket, const sockaddr_in& udpAddr, const std::string& name);
+    ClientSocket(SOCKET tcpSocket, const sockaddr_in& tcpAddr, int id);
     void displayClientInfo() const;
     ~ClientSocket() = default;
 
@@ -18,9 +18,7 @@ private:
     friend class Server;
     SOCKET _tcpSocket;
     sockaddr_in _tcpAddr;
-    SOCKET _udpSocket;
-    sockaddr_in _udpAddr;
-    std::string _name;
+    int _id;
 };
 
 

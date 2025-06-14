@@ -35,5 +35,5 @@ int main( int argc, char *argv[] )
     //player.setWindowContent(new OptionWindowContent());
     user.setWindowContent(new MenuWindowContent());
     user.start();
-    return 0;
+    return EXIT_SUCCESS;
 }

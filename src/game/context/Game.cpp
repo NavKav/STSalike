@@ -130,5 +130,5 @@ void Game::process() {
     if (user[SDL_SCANCODE_Q].pressed) {
         _client.sendUDP("a appuye sur A");
     }
-    user.waitAnyKeyThenClose();
+    //user.waitAnyKeyThenClose();
 }

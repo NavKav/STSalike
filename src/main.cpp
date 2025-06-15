@@ -27,13 +27,13 @@ int main( int argc, char *argv[] )
     }
 
 
-    launchServerConsole(argv[0]);
+    //launchServerConsole(argv[0]);
 
 
     // (32 x 40) x (32 x 24)
     //player.setWindowContent(new MenuWindowContent());
     //player.setWindowContent(new OptionWindowContent());
-    user.setWindowContent(new GameWindowContent());
+    user.setWindowContent(new MenuWindowContent());
     user.start();
-    return 0;
+    return EXIT_SUCCESS;
 }

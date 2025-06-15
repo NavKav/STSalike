@@ -7,22 +7,23 @@
 
 #include <map>
 #include <vector>
+#include <memory>
+#include <algorithm>
 
 #include "OSMultiplayerDependencies.h"
 #include "core/User.h"
 #include "ClientSocket.h"
 
-class ClientSocket;
-
+#define BUFFER_SIZE 1024
 
 class Server {
 public:
     Server(int port);
     ~Server();
     void start();
-    void udpPacketHandling(sockaddr_in clientAddr, int bytesReceived, char* buffer);
-    void tcpPacketHandling(SOCKET clientSock, int bytesReceived, char* buffer);
-    bool tcpAcceptanceHandling(SOCKET newClientSocket, sockaddr_in clientAddr);
+    void udpPacketHandling(sockaddr_in& clientAddr);
+    void tcpPacketHandling(SOCKET clientSock, int bytesReceived);
+    bool tcpAcceptanceHandling(sockaddr_in& clientAddr);
 
 private :
 
@@ -32,9 +33,13 @@ private :
     SOCKET _udpSocket;
     SOCKET _tcpSocket;
     sockaddr_in _server;
-    int _addrLen;
+    socklen_t  _addrLen;
 
     bool _serverToggle = true;
+
+    char _buffer[BUFFER_SIZE] = {};
+
+    int _idCount = 0;
 };
 
 #endif //ARPG_STORYBOARD_SERVER_H

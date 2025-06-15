@@ -27,7 +27,7 @@ Client::Client(int port, const string& ip) {
     _tcpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (_tcpSocket == INVALID_SOCKET) {
         std::cerr << "Échec création socket TCP : " << getSocketError() << std::endl;
-        closesocket(_udpSocket);
+        disconnectSocket(_udpSocket);
         exit(EXIT_FAILURE);
     }
 
@@ -35,7 +35,12 @@ Client::Client(int port, const string& ip) {
     memset(&_server, 0, sizeof(_server));
     _server.sin_family = AF_INET;
     _server.sin_port = htons(port);
-    _server.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
+    if (inet_pton(AF_INET, ip.c_str(), &(_server.sin_addr)) <= 0) {
+        std::cerr << "Adresse IP invalide ou non supportée : " << ip << std::endl;
+        disconnectSocket(_udpSocket);
+        disconnectSocket(_tcpSocket);
+        exit(EXIT_FAILURE);
+    }
 
     // Connexion TCP
     int attempts = 0;
@@ -47,7 +52,7 @@ Client::Client(int port, const string& ip) {
         int err = getSocketError();
         if (err != 0) {
             std::cout << "Connexion refusée, nouvelle tentative..." << std::endl;
-            Sleep(500);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             attempts++;
         } else {
             std::cerr << "Erreur connect(): " << err << std::endl;

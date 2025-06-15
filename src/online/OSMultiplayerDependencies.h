@@ -18,8 +18,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <iostream>
-
-using Socket = SOCKET;
+#include <ws2tcpip.h>
 
 inline void socketInitialisation() {
     WSADATA wsa;
@@ -35,12 +34,17 @@ inline int getSocketError() {
     return WSAGetLastError();
 }
 
-inline void disconnectSocket(Socket socket) {
+inline void disconnectSocket(SOCKET socket) {
     closesocket(socket);
 }
 
 inline void cleanupSocket() {
     WSACleanup();
+}
+
+inline void setNonBlocking(SOCKET socket) {
+    unsigned long mode = 1;
+    ioctlsocket(socket, FIONBIO, &mode);
 }
 
 #elif defined(ARPG_OS_LINUX) || defined(ARPG_OS_MACOS)
@@ -51,8 +55,12 @@ inline void cleanupSocket() {
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 
-using Socket = int;
+#define INVALID_SOCKET (-1)
+#define SOCKET_ERROR (-1)
+
+typedef int SOCKET;
 
 inline void socketInitialisation() {}
 
@@ -60,11 +68,16 @@ inline int getSocketError() {
     return errno;
 }
 
-inline void disconnectSocket(Socket socket) {
+inline void disconnectSocket(SOCKET socket) {
     close(socket);
 }
 
 inline void cleanupSocket() {}
+
+inline void setNonBlocking(SOCKET socket) {
+    int flags = fcntl(socket, F_GETFL, 0);
+    fcntl(socket, F_SETFL, flags | O_NONBLOCK);
+}
 
 #endif
 

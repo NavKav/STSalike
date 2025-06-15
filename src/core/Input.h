@@ -5,7 +5,6 @@
 #ifndef DICE_GAME_PROJECT_INPUT_H
 #define DICE_GAME_PROJECT_INPUT_H
 
-#include "requirement.h"
 /*
 typedef struct {
     int u, v;

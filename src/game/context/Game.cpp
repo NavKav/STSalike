@@ -12,7 +12,6 @@ using namespace std;
 
 Game::Game() :
 _client(1998, "127.0.0.1") {
-
 }
 
 double computeNoiseHeight(PerlinNoise& _perlinNoise, int x, int y) {
@@ -128,7 +127,8 @@ void Game::process() {
         _client.sendTCP("a appuye sur espace");
     }
     if (user[SDL_SCANCODE_Q].pressed) {
-        _client.sendUDP("a appuye sur A");
+        _client.sendUDP("hello world");
     }
+
     //user.waitAnyKeyThenClose();
 }

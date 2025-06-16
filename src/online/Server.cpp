@@ -3,25 +3,31 @@
 //
 
 #include <vector>
+#include <algorithm> // Pour find_if et remove_if
+#include <iostream>  // Pour cerr, cout
+#include <cstring>   // Pour memset, strlen
+#include <string>    // Pour string
+#include <memory>    // Pour unique_ptr
+#include <set>       // Si toujours utilisé pour d'autres raisons, sinon peut être retiré
+
 #include "Server.h"
+#include "OSMultiplayerDependencies.h"
+#include "ClientSocket.h" // Assurez-vous que c'est inclus
 
 using namespace std;
 
 Server::Server(int port) {
-    // Initialise Winsock
     socketInitialisation();
 
-    // --- UDP ---
     _udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (_udpSocket == INVALID_SOCKET) {
-        std::cout << "Could not create UDP socket: " << getSocketError() << std::endl;
+        cout << "Could not create UDP socket: " << getSocketError() << endl;
         exit(EXIT_FAILURE);
     }
 
-    // --- TCP ---
     _tcpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (_tcpSocket == INVALID_SOCKET) {
-        std::cout << "Could not create TCP socket: " << getSocketError() << std::endl;
+        cout << "Could not create TCP socket: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         exit(EXIT_FAILURE);
     }
@@ -31,30 +37,28 @@ Server::Server(int port) {
     _server.sin_addr.s_addr = INADDR_ANY;
     _server.sin_port = htons(port);
 
-    // --- Bind UDP ---
     if (::bind(_udpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
-        std::cout << "Bind UDP failed with error code: " << getSocketError() << std::endl;
+        cout << "Bind UDP failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
-    // --- Bind TCP ---
     if (::bind(_tcpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
-        std::cout << "Bind TCP failed with error code: " << getSocketError() << std::endl;
+        cout << "Bind TCP failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
     if (::listen(_tcpSocket, SOMAXCONN) == SOCKET_ERROR) {
-        std::cout << "Listen failed with error code: " << getSocketError() << std::endl;
+        cout << "Listen failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Server ready: listening on port " << port << " (TCP & UDP)" << std::endl;
+    cout << "Server ready: listening on port " << port << " (TCP & UDP)" << endl;
 }
 
 Server::~Server() {
@@ -67,7 +71,7 @@ void Server::start() {
     fd_set readfds;
     sockaddr_in clientAddr{};
 
-    std::cout << "Serveur en attente de messages..." << std::endl;
+    cout << "Serveur en attente de messages..." << endl;
 
     while (_serverToggle) {
         _addrLen = sizeof(clientAddr);
@@ -75,17 +79,17 @@ void Server::start() {
         _clientsToProcess.clear();
 
         /*************************************************************************/
-        /*************************  MULTIPLEXING  ********************************/
+        /************************* MULTIPLEXING  ********************************/
         /*************************************************************************/
 
         FD_ZERO(&readfds);
         FD_SET(_udpSocket, &readfds);
         FD_SET(_tcpSocket, &readfds);
 
-        SOCKET maxSocket = std::max(_udpSocket, _tcpSocket);
+        SOCKET maxSocket = max(_udpSocket, _tcpSocket);
 
-        for (auto const& pair : _connectedTcpClients) {
-            SOCKET clientSock = pair.first;
+        for (const auto& clientPtr : _connectedTcpClients) {
+            SOCKET clientSock = clientPtr->_tcpSocket;
             FD_SET(clientSock, &readfds);
             if (clientSock > maxSocket) {
                 maxSocket = clientSock;
@@ -95,105 +99,123 @@ void Server::start() {
         int activity = select(maxSocket + 1, &readfds, nullptr, nullptr, nullptr);
 
         if (activity == SOCKET_ERROR) {
-            std::cerr << "select() error: " << getSocketError() << std::endl;
+            cerr << "select() error: " << getSocketError() << endl;
             continue;
         }
 
+        /************************************************************************/
+        /************************* TCP ACCEPTANCE  ******************************/
+        /************************************************************************/
 
-        /*************************************************************************/
-        /*************************  UDP HANDLING  ********************************/
-        /*************************************************************************/
+        if (FD_ISSET(_tcpSocket, &readfds)) {
+            if(tcpAcceptanceHandling(clientAddr)) {
+                continue;
+            }
+        }
+
+        /************************************************************************/
+        /************************* UDP HANDLING  ********************************/
+        /************************************************************************/
 
         if (FD_ISSET(_udpSocket, &readfds)) {
             memset(_buffer, 0, sizeof(_buffer));
             udpPacketHandling(clientAddr);
         }
 
-        /*************************************************************************/
-        /*************************  TCP ACCEPTANCE  ******************************/
-        /*************************************************************************/
+        /************************************************************************/
+        /************************* TCP HANDLING  ********************************/
+        /************************************************************************/
 
-        if (FD_ISSET(_tcpSocket, &readfds)) {
-            if(tcpAcceptanceHandling(clientAddr))
-                continue;
-        }
-
-        /*************************************************************************/
-        /*************************  TCP HANDLING  ********************************/
-        /*************************************************************************/
-
-        for (auto const& pair : _connectedTcpClients) {
-            _clientsToProcess.push_back(pair.first);
+        for (const auto& clientPtr : _connectedTcpClients) {
+            SOCKET clientSock = clientPtr->_tcpSocket;
+            if (FD_ISSET(clientSock, &readfds)) {
+                _clientsToProcess.push_back(clientSock);
+            }
         }
 
         for (SOCKET clientSock : _clientsToProcess) {
             if (FD_ISSET(clientSock, &readfds)) {
-                memset(_buffer, 0, sizeof(_buffer));
-                int bytesReceived = recv(clientSock, _buffer, BUFFER_SIZE - 1, 0);
-                tcpPacketHandling(clientSock, bytesReceived);
+                 memset(_buffer, 0, sizeof(_buffer));
+                 int bytesReceived = recv(clientSock, _buffer, BUFFER_SIZE - 1, 0);
+                 tcpPacketHandling(clientSock, bytesReceived);
             }
         }
     }
 }
 
 void Server::udpPacketHandling(sockaddr_in& clientAddr) {
-    int bytesReceived = recvfrom(_udpSocket, _buffer, BUFFER_SIZE - 1, 0,(sockaddr*)&clientAddr, &_addrLen);
+    int bytesReceived = recvfrom(_udpSocket, _buffer, BUFFER_SIZE - 1, 0, (sockaddr*)&clientAddr, &_addrLen);
 
-    if (bytesReceived > 0) {
+    char ipBuffer[INET_ADDRSTRLEN];
+
+    if (bytesReceived >= 0) {
         _buffer[bytesReceived] = '\0';
-        char ipBuffer[INET_ADDRSTRLEN];
+
         if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-            std::cout << "[UDP] Message de " << ipBuffer << ":" << ntohs(clientAddr.sin_port) << " : " << _buffer << std::endl;
+            if (bytesReceived > 0) {
+                cout << "[Chat] Message de " << ipBuffer << ":" << ntohs(clientAddr.sin_port) << " : " << _buffer << endl;
+            }
         } else {
-            std::cerr << "[UDP] Message reçu d'une adresse inconnue (conversion IP échouée)." << std::endl;
-        }
-    } else if (bytesReceived == 0) {
-        char ipBuffer[INET_ADDRSTRLEN];
-        if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-            std::cout << "[UDP] Erreur ou message vide reçu. (" << ipBuffer << ":" << ntohs(clientAddr.sin_port) << ")" << std::endl;
-        } else {
-            std::cerr << "[UDP] Erreur ou message vide reçu (adresse IP non convertie)." << std::endl;
+            cerr << "[UDP] Message ou paquet vide reçu d'une adresse inconnue (conversion IP échouée)." << endl;
         }
     } else {
-        char ipBuffer[INET_ADDRSTRLEN];
-        std::cerr << "[UDP] recvfrom() error: " << getSocketError();
+        cerr << "[UDP] Erreur recvfrom(): " << getSocketError() << " (";
         if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-            std::cerr << " (" << ipBuffer << ":" << ntohs(clientAddr.sin_port) << ")" << std::endl;
+            cerr << string(ipBuffer) + ":" + to_string(ntohs(clientAddr.sin_port));
         } else {
-            std::cerr << " (adresse inconnue)" << std::endl;
+            cerr << "adresse inconnue";
         }
+          cerr << ")" << endl;
     }
 }
 
 void Server::tcpPacketHandling(SOCKET clientSock, int bytesReceived) {
     if (bytesReceived > 0) {
         _buffer[bytesReceived] = '\0';
-        if (_connectedTcpClients.count(clientSock)) {
+        auto it = find_if(_connectedTcpClients.begin(), _connectedTcpClients.end(),
+                               [clientSock](const unique_ptr<ClientSocket>& clientPtr) {
+                                   return clientPtr->_tcpSocket == clientSock;
+                               });
+
+        if (it != _connectedTcpClients.end()) {
+            ClientSocket* currentClient = (*it).get();
             char ipBuffer[INET_ADDRSTRLEN];
-            if (inet_ntop(AF_INET, &(_connectedTcpClients[clientSock]->_tcpAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-                std::cout << "[TCP] Message de " << _connectedTcpClients[clientSock]->_id
+            if (inet_ntop(AF_INET, &(currentClient->_tcpAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
+                cout << "[TCP] Message de " << currentClient->_id
                           << " (" << ipBuffer << ":"
-                          << ntohs(_connectedTcpClients[clientSock]->_tcpAddr.sin_port) << ") : "
-                          << _buffer << std::endl;
+                          << ntohs(currentClient->_tcpAddr.sin_port) << ") : "
+                          << _buffer << endl;
             } else {
-                std::cerr << "[TCP] Message de " << _connectedTcpClients[clientSock]->_id
-                          << " (adresse IP non convertie) : " << _buffer << std::endl;
+                cerr << "[TCP] Message de " << currentClient->_id
+                          << " (adresse IP non convertie) : " << _buffer << endl;
             }
-        }
-    } else if (bytesReceived == 0) {
-        std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_id << " déconnecté." << std::endl;
-        disconnectSocket(clientSock);
-        _connectedTcpClients.erase(clientSock);
-    } else {
-        int errCode = getSocketError();
-        if (errCode == 0) {
-            std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_id << " déconnecté de force (reset)." << std::endl;
         } else {
-            std::cerr << "[TCP] recv() error on socket " << clientSock << ": " << errCode << std::endl;
+            cerr << "[TCP] Erreur: ClientSocket introuvable pour la socket " << clientSock << " lors de la réception d'un message." << endl;
         }
-        disconnectSocket(clientSock);
-        _connectedTcpClients.erase(clientSock);
-        if (_connectedTcpClients.empty()) _serverToggle = false;
+    } else {
+        auto it = remove_if(_connectedTcpClients.begin(), _connectedTcpClients.end(),
+                                 [clientSock](const unique_ptr<ClientSocket>& clientPtr) {
+                                     return clientPtr->_tcpSocket == clientSock;
+                                 });
+
+        if (it != _connectedTcpClients.end()) {
+            cout << "[TCP] Client ID " << (*it)->_id;
+            if (bytesReceived == 0) {
+                cout << " déconnecté (gracieusement)." << endl;
+            } else {
+                 int errCode = getSocketError();
+                 if (errCode == 0) {
+                     cout << " déconnecté de force (reset)." << endl;
+                 } else {
+                     cerr << " déconnecté (erreur recv: " << errCode << ")." << endl;
+                 }
+            }
+            _connectedTcpClients.erase(it, _connectedTcpClients.end());
+        } else {
+            cerr << "[TCP] Erreur: Tentative de déconnexion d'une socket (" << clientSock << ") non trouvée dans _connectedTcpClients." << endl;
+        }
+
+        ::closesocket(clientSock);
     }
 }
 
@@ -201,23 +223,66 @@ bool Server::tcpAcceptanceHandling(sockaddr_in& clientAddr) {
     SOCKET newClientSocket = ::accept(_tcpSocket, (sockaddr*)&clientAddr, &_addrLen);
 
     if (newClientSocket == INVALID_SOCKET) {
-        std::cerr << "accept() failed: " << getSocketError() << std::endl;
+        cerr << "accept() failed: " << getSocketError() << endl;
         return false;
     }
 
     char ipBuffer[INET_ADDRSTRLEN];
     if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-        std::cout << "[TCP] Nouvelle connexion acceptée depuis "
-                  << ipBuffer << ":" << ntohs(clientAddr.sin_port) << std::endl;
+        cout << "[TCP] Nouvelle connexion acceptée depuis "
+                  << ipBuffer << ":" << ntohs(clientAddr.sin_port) << endl;
     } else {
-        std::cerr << "[TCP] Nouvelle connexion acceptée depuis une adresse inconnue." << std::endl;
+        cerr << "[TCP] Nouvelle connexion acceptée avec une erreur de conversion IP : "
+                          << "Code d'erreur inet_ntop (errno) : " << getSocketError()
+                          << ". Vérifiez la famille d'adresses ou la taille du buffer." << endl;
     }
 
-    _connectedTcpClients[newClientSocket] = std::make_unique<ClientSocket>(
+    _connectedTcpClients.push_back(make_unique<ClientSocket>(
             newClientSocket, clientAddr, _idCount
-    );
+    ));
     _idCount ++;
 
-    _connectedTcpClients[newClientSocket]->displayClientInfo();
+    _connectedTcpClients.back()->displayClientInfo();
+
+    sendToTcpClient(_idCount-1, "bienvenu !");
+
     return true;
+}
+
+void Server::sendToTcpClient(int clientId, const string& message) {
+    SOCKET targetSocket = INVALID_SOCKET;
+
+    auto it = find_if(_connectedTcpClients.begin(), _connectedTcpClients.end(),
+                           [clientId](const unique_ptr<ClientSocket>& clientPtr) {
+                               return clientPtr->_id == clientId;
+                           });
+
+    if (it == _connectedTcpClients.end()) {
+        cerr << "[Server] Erreur: Client TCP avec ID " << clientId
+                  << " non trouvé ou déjà déconnecté." << endl;
+        return;
+    }
+
+    targetSocket = (*it)->_tcpSocket;
+
+    const char* data = message.c_str();
+    int dataSize = message.length();
+
+    cout << "[Server] Envoi du message TCP à client " << clientId
+              << " : \"" << message << "\"" << endl;
+
+    int bytesSent = ::send(targetSocket, data, dataSize, 0);
+
+    if (bytesSent == SOCKET_ERROR) {
+        int errCode = getSocketError();
+        cerr << "[TCP] Erreur lors de l'envoi au client " << clientId
+                  << " (Socket: " << targetSocket << "). Code d'erreur : " << errCode << endl;
+    } else if (bytesSent == 0) {
+        cout << "[TCP] send() pour client " << clientId << " a envoyé 0 octets. Socket fermée ?" << endl;
+    } else if (bytesSent < dataSize) {
+        cerr << "[TCP] send() pour client " << clientId << " : Seulement "
+                  << bytesSent << " octets envoyés sur " << dataSize << ". (Message tronqué ou buffer plein)." << endl;
+    } else {
+        cout << "[TCP] Message envoyé à client " << clientId << " (" << bytesSent << " octets)." << endl;
+    }
 }

@@ -84,6 +84,27 @@ void Client::sendUDP(const std::string& s) {
     }
 }
 
+string Client::receiveTCP() {
+    memset(_receiveBuffer, 0, CLIENT_BUFFER_SIZE);
+
+    int bytesReceived = ::recv(_tcpSocket, _receiveBuffer, CLIENT_BUFFER_SIZE - 1, 0);
+
+    if (bytesReceived > 0) {
+        _receiveBuffer[bytesReceived] = '\0';
+        std::cout << "[Client TCP] Message reçu du serveur: \"" << _receiveBuffer << "\"" << std::endl;
+        return std::string(_receiveBuffer);
+    } else if (bytesReceived == 0) {
+        std::cout << "[Client TCP] Serveur déconnecté" << std::endl;
+        disconnectSocket(_tcpSocket);
+        _tcpSocket = INVALID_SOCKET;
+        return "";
+    } else {
+        int errCode = getSocketError();
+        std::cerr << "[Client TCP] Erreur lors de la réception du serveur. Code: " << errCode << std::endl;
+        return "";
+    }
+}
+
 void Client::sendTCP(const std::string& s) const {
     const char* message = s.c_str();
     int msgLen = static_cast<int>(strlen(message));

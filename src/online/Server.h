@@ -11,7 +11,6 @@
 #include <algorithm>
 
 #include "OSMultiplayerDependencies.h"
-#include "core/User.h"
 #include "ClientSocket.h"
 
 #define BUFFER_SIZE 1024
@@ -21,13 +20,16 @@ public:
     Server(int port);
     ~Server();
     void start();
+
     void udpPacketHandling(sockaddr_in& clientAddr);
     void tcpPacketHandling(SOCKET clientSock, int bytesReceived);
     bool tcpAcceptanceHandling(sockaddr_in& clientAddr);
 
+    void sendToTcpClient(int clientId, const std::string& message);
+
 private :
 
-    std::map<SOCKET, std::unique_ptr<ClientSocket>> _connectedTcpClients;
+    std::vector<std::unique_ptr<ClientSocket>> _connectedTcpClients;
     std::vector<SOCKET> _clientsToProcess;
 
     SOCKET _udpSocket;

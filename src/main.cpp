@@ -7,7 +7,6 @@
 #include "game/menu/MenuWindowContent.h"
 #include "util/OSCommandDependencies.h"
 
-#undef main
 
 using namespace std;
 

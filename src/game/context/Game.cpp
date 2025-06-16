@@ -33,7 +33,7 @@ double computeNoiseHeight(PerlinNoise& _perlinNoise, int x, int y) {
 
     for (int i = 0; i < octave; ++i) {
         double sx = (r / scale) * frequency;
-        double sy = (theta / (2.0f * M_PI)) * frequency;
+        double sy = (theta / (2.0f * std::numbers::pi)) * frequency;
 
         double tmp = _perlinNoise.noise(sx, sy) * 2.0f - 1.0f;
         noiseHeight += tmp * amplitude;

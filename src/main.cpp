@@ -7,13 +7,14 @@
 #include "game/menu/MenuWindowContent.h"
 #include "util/OSCommandDependencies.h"
 
+#undef main
 
 using namespace std;
 
 using namespace std::filesystem;
 
 
-int main( int argc, char *argv[] )
+int main(int argc, char* argv[])
 {
     if (argc == 2 && !strcmp(argv[1], "_server")) {
         window.close();

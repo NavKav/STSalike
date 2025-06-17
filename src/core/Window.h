@@ -10,7 +10,7 @@
 #include <iostream>
 #include "SDL_image.h"
 #include "SDL_ttf.h"
-#include "SDL2/SDL.h"
+#include "SDL.h"
 
 
 #define BACKGROUND (unsigned int)0

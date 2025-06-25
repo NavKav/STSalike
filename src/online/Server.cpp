@@ -201,11 +201,11 @@ void Server::tcpPacketHandling(SOCKET clientSock, int bytesReceived) {
         if (it != _connectedTcpClients.end()) {
             cout << "[TCP] Client ID " << (*it)->_id;
             if (bytesReceived == 0) {
-                cout << " déconnecté (gracieusement)." << endl;
+                cout << " déconnecté." << endl;
             } else {
                  int errCode = getSocketError();
                  if (errCode == 0) {
-                     cout << " déconnecté de force (reset)." << endl;
+                     cout << " déconnecté de force." << endl;
                  } else {
                      cerr << " déconnecté (erreur recv: " << errCode << ")." << endl;
                  }

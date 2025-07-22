@@ -49,7 +49,8 @@ file(GLOB_RECURSE SOURCES
         src/*/*/*/*/*.cpp
 )
 
-add_executable(STSalike ${SOURCES})
+add_executable(STSalike ${SOURCES}
+        src/core/InputDefinition.h)
 
 target_include_directories(STSalike PRIVATE
         ${PROJECT_SOURCE_DIR}/src

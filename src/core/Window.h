@@ -68,6 +68,6 @@ private :
 
 };
 
-inline Window window("STS Alike", 700, 700);
+inline Window window("STS Alike", 1100, 800);
 
 #endif //PROJECTTT_WINDOW_H

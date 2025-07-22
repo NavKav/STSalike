@@ -7,6 +7,9 @@
 
 #include <iostream>
 
+
+#include <core/User.h>
+#include <core/InputDefinition.h>
 #include <core/WindowContent.h>
 
 

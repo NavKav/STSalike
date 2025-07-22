@@ -10,7 +10,7 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 inline void launchServerConsole(const char* executablePath) {
-    std::string cmd = "start \"STSalike Server console\" cmd /k \"" + std::string(executablePath) + " _server < nul\"";
+    std::string cmd = "start \"STSalike Server console\" cmd /k \"chcp 65001 > nul & \"" + std::string(executablePath) + "\" _server < nul\"";
     system(cmd.c_str());
 }
 #elif defined(__linux__)

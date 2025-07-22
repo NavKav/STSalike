@@ -9,9 +9,18 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <thread>
+#include <vector>
+#include <algorithm>
+#include <iostream>
+#include <cstring>
+#include <string>
+#include <memory>
+#include <set>
 
 #include "OSMultiplayerDependencies.h"
-#include "ClientSocket.h"
+#include "ClientSession.h"
+#include "game/context/GameModel.h"
 
 #define BUFFER_SIZE 1024
 
@@ -21,15 +30,17 @@ public:
     ~Server();
     void start();
 
-    void udpPacketHandling(sockaddr_in& clientAddr);
-    void tcpPacketHandling(SOCKET clientSock, int bytesReceived);
+    void runNetworkLoop();
+
+    private :
+        void udpPacketHandling(sockaddr_in& clientAddr);
+    bool tcpPacketHandling(std::vector<std::unique_ptr<ClientSession>>::iterator& clientIt, SOCKET clientSock);
     bool tcpAcceptanceHandling(sockaddr_in& clientAddr);
+    void processOutgoingMessages();
 
     void sendToTcpClient(int clientId, const std::string& message);
 
-private :
-
-    std::vector<std::unique_ptr<ClientSocket>> _connectedTcpClients;
+    std::vector<std::unique_ptr<ClientSession>> _connectedTcpClients;
     std::vector<SOCKET> _clientsToProcess;
 
     SOCKET _udpSocket;
@@ -42,6 +53,12 @@ private :
     char _buffer[BUFFER_SIZE] = {};
 
     int _idCount = 0;
+    unsigned int _connectedTotal = 0;
+
+    GameModel _gameModel;
+
+    std::thread _gameModelThread;
 };
+
 
 #endif //ARPG_STORYBOARD_SERVER_H

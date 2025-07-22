@@ -2,16 +2,16 @@
 // Created by NavKav on 25/05/2025.
 //
 
-#include "ClientSocket.h"
+#include "ClientSession.h"
 
-ClientSocket::ClientSocket(SOCKET tcpSocket, const sockaddr_in& tcpAddr, int id) :
+ClientSession::ClientSession(SOCKET tcpSocket, const sockaddr_in& tcpAddr, int id) :
 _tcpSocket(tcpSocket),
 _tcpAddr(tcpAddr),
 _id(id) {
 
 }
 
-void ClientSocket::displayClientInfo() const {
+void ClientSession::displayClientInfo() const {
     std::cout << "Client ID: " << _id << std::endl;
     std::cout << "  TCP Socket: " << _tcpSocket << std::endl;
 

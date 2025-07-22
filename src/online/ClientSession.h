@@ -8,11 +8,11 @@
 #include "OSMultiplayerDependencies.h"
 
 
-class ClientSocket {
+class ClientSession {
 public:
-    ClientSocket(SOCKET tcpSocket, const sockaddr_in& tcpAddr, int id);
+    ClientSession(SOCKET tcpSocket, const sockaddr_in& tcpAddr, int id);
     void displayClientInfo() const;
-    ~ClientSocket() = default;
+    ~ClientSession() = default;
 
 private:
     friend class Server;

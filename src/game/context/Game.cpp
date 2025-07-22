@@ -130,5 +130,8 @@ void Game::process() {
         _client.sendUDP("hello world");
     }
 
+    if(string s = _client.receiveTCP(); !s.empty())
+        cout << s << endl;
+
     //user.waitAnyKeyThenClose();
 }

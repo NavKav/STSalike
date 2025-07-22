@@ -9,8 +9,13 @@
 #include <unordered_map>
 #include <iostream>
 #include "SDL2/SDL.h"
-#include "SDL_image.h"
-#include "SDL_ttf.h"
+#if defined(_WIN32)
+    #include "SDL_image.h"
+    #include "SDL_ttf.h"
+#else
+    #include "SDL2/SDL_image.h"
+    #include "SDL2/SDL_ttf.h"
+#endif
 
 
 #define BACKGROUND (unsigned int)0

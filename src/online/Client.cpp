@@ -9,13 +9,6 @@ using namespace std;
 Client::Client(int port, const string& ip) {
     socketInitialisation();
 
-    // ---------- SOCKET UDP ----------
-    _udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (_udpSocket == INVALID_SOCKET) {
-        std::cerr << "Échec de la création du socket UDP : " << getSocketError() << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
     // Création du socket UDP
     _udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (_udpSocket == INVALID_SOCKET) {
@@ -46,6 +39,7 @@ Client::Client(int port, const string& ip) {
     int attempts = 0;
     while (attempts < 5) {
         if (connect(_tcpSocket, (sockaddr*)&_server, sizeof(_server)) != SOCKET_ERROR) {
+            setNonBlocking(_tcpSocket);
             break; // Succès
         }
 
@@ -100,7 +94,13 @@ string Client::receiveTCP() {
         return "";
     } else {
         int errCode = getSocketError();
-        std::cerr << "[Client TCP] Erreur lors de la réception du serveur. Code: " << errCode << std::endl;
+        if (errCode == SOCK_ERR_WOULDBLOCK || errCode == SOCK_ERR_INTR) {
+            return "";
+        }
+
+        std::cerr << "[Client TCP] Erreur grave lors de la réception du serveur. Déconnexion. Code: " << errCode << std::endl;
+        disconnectSocket(_tcpSocket);
+        _tcpSocket = INVALID_SOCKET;
         return "";
     }
 }

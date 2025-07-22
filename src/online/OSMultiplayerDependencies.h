@@ -20,6 +20,10 @@
 #include <iostream>
 #include <ws2tcpip.h>
 
+#define SOCK_ERR_WOULDBLOCK     WSAEWOULDBLOCK   // Pas de données disponibles pour socket non-bloquante (10035)
+#define SOCK_ERR_CONNRESET      WSAECONNRESET    // Connexion réinitialisée par le pair (10054)
+#define SOCK_ERR_INTR           WSAEINTR         // Appel de fonction interrompu (10004)
+
 inline void socketInitialisation() {
     WSADATA wsa;
     std::cout << "Initialising Winsock..." << std::endl;
@@ -59,6 +63,10 @@ inline void setNonBlocking(SOCKET socket) {
 
 #define INVALID_SOCKET (-1)
 #define SOCKET_ERROR (-1)
+
+#define SOCK_ERR_WOULDBLOCK     EAGAIN           // Pas de données disponibles (EWOULDBLOCK souvent égal à EAGAIN)
+#define SOCK_ERR_CONNRESET      ECONNRESET       // Connexion réinitialisée par le pair
+#define SOCK_ERR_INTR           EINTR            // Appel de fonction interrompu
 
 typedef int SOCKET;
 

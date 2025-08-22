@@ -12,14 +12,14 @@ Client::Client(int port, const string& ip) {
     // Création du socket UDP
     _udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (_udpSocket == INVALID_SOCKET) {
-        std::cerr << "Échec création socket UDP : " << getSocketError() << std::endl;
+        cerr << "Échec création socket UDP : " << getSocketError() << endl;
         exit(EXIT_FAILURE);
     }
 
     // Création du socket TCP
     _tcpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (_tcpSocket == INVALID_SOCKET) {
-        std::cerr << "Échec création socket TCP : " << getSocketError() << std::endl;
+        cerr << "Échec création socket TCP : " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         exit(EXIT_FAILURE);
     }
@@ -29,7 +29,7 @@ Client::Client(int port, const string& ip) {
     _server.sin_family = AF_INET;
     _server.sin_port = htons(port);
     if (inet_pton(AF_INET, ip.c_str(), &(_server.sin_addr)) <= 0) {
-        std::cerr << "Adresse IP invalide ou non supportée : " << ip << std::endl;
+        cerr << "Adresse IP invalide ou non supportée : " << ip << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
@@ -45,21 +45,19 @@ Client::Client(int port, const string& ip) {
 
         int err = getSocketError();
         if (err != 0) {
-            std::cout << "Connexion refusée, nouvelle tentative..." << std::endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            cout << "Connexion refusée, nouvelle tentative..." << endl;
+            this_thread::sleep_for(chrono::milliseconds(500));
             attempts++;
         } else {
-            std::cerr << "Erreur connect(): " << err << std::endl;
+            cerr << "Erreur connect(): " << err << endl;
             exit(EXIT_FAILURE);
         }
     }
 
     if (attempts == 5) {
-        std::cerr << "Impossible de se connecter après plusieurs tentatives." << std::endl;
+        cerr << "Impossible de se connecter après plusieurs tentatives." << endl;
         exit(EXIT_FAILURE);
     }
-
-    std::cout << "Sockets TCP et UDP initialisés avec succès sur le même serveur." << std::endl;
 }
 
 Client::~Client() {
@@ -67,13 +65,13 @@ Client::~Client() {
     disconnectSocket(_udpSocket);
 }
 
-void Client::sendUDP(const std::string& s) {
+void Client::sendUDP(const string& s) {
     const char* message = s.c_str();
     int msgLen = static_cast<int>(strlen(message));
     int slen = sizeof(_server);
 
     while (sendto(_udpSocket, message, msgLen, 0, (sockaddr*)&_server, slen) == SOCKET_ERROR) {
-        std::cout << "sendto() failed with error code: " << getSocketError() << std::endl;
+        cout << "sendto() failed with error code: " << getSocketError() << endl;
         exit(EXIT_FAILURE);
     }
 }
@@ -85,10 +83,10 @@ string Client::receiveTCP() {
 
     if (bytesReceived > 0) {
         _receiveBuffer[bytesReceived] = '\0';
-        std::cout << "[Client TCP] Message reçu du serveur: \"" << _receiveBuffer << "\"" << std::endl;
-        return std::string(_receiveBuffer);
+        cout << "[Client TCP] Message reçu du serveur: \"" << _receiveBuffer << "\"" << endl;
+        return string(_receiveBuffer);
     } else if (bytesReceived == 0) {
-        std::cout << "[Client TCP] Serveur déconnecté" << std::endl;
+        cout << "[Client TCP] Serveur déconnecté" << endl;
         disconnectSocket(_tcpSocket);
         _tcpSocket = INVALID_SOCKET;
         return "";
@@ -98,14 +96,14 @@ string Client::receiveTCP() {
             return "";
         }
 
-        std::cerr << "[Client TCP] Erreur grave lors de la réception du serveur. Déconnexion. Code: " << errCode << std::endl;
+        cerr << "[Client TCP] Erreur grave lors de la réception du serveur. Déconnexion. Code: " << errCode << endl;
         disconnectSocket(_tcpSocket);
         _tcpSocket = INVALID_SOCKET;
         return "";
     }
 }
 
-void Client::sendTCP(const std::string& s) const {
+void Client::sendTCP(const string& s) const {
     const char* message = s.c_str();
     int msgLen = static_cast<int>(strlen(message));
     int totalSent = 0;
@@ -113,7 +111,7 @@ void Client::sendTCP(const std::string& s) const {
     while (totalSent < msgLen) {
         int sent = send(_tcpSocket, message + totalSent, msgLen - totalSent, 0);
         if (sent == SOCKET_ERROR) {
-            std::cout << "send() failed with error code: " << getSocketError() << std::endl;
+            cout << "send() failed with error code: " << getSocketError() << endl;
             exit(EXIT_FAILURE);
         }
         totalSent += sent;

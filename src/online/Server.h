@@ -5,35 +5,31 @@
 #ifndef ARPG_STORYBOARD_SERVER_H
 #define ARPG_STORYBOARD_SERVER_H
 
-#include <map>
+#include <algorithm>
 #include <vector>
 #include <memory>
-#include <algorithm>
 #include <thread>
 #include <vector>
-#include <algorithm>
-#include <iostream>
-#include <cstring>
 #include <string>
 #include <memory>
-#include <set>
 
 #include "OSMultiplayerDependencies.h"
 #include "ClientSession.h"
 #include "game/context/GameModel.h"
+#include "ServerConsole.h"
 
 #define BUFFER_SIZE 1024
 
 class Server {
 public:
-    Server(int port);
+    explicit Server(int port);
     ~Server();
     void start();
 
     void runNetworkLoop();
 
-    private :
-        void udpPacketHandling(sockaddr_in& clientAddr);
+private :
+    void udpPacketHandling(sockaddr_in& clientAddr);
     bool tcpPacketHandling(std::vector<std::unique_ptr<ClientSession>>::iterator& clientIt, SOCKET clientSock);
     bool tcpAcceptanceHandling(sockaddr_in& clientAddr);
     void processOutgoingMessages();
@@ -45,8 +41,8 @@ public:
 
     SOCKET _udpSocket;
     SOCKET _tcpSocket;
-    sockaddr_in _server;
-    socklen_t  _addrLen;
+    sockaddr_in _server{};
+    socklen_t  _addrLen{};
 
     bool _serverToggle = true;
 

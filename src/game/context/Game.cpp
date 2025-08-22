@@ -3,123 +3,137 @@
 //
 
 #include "Game.h"
+#include <cmath>
+#include <iostream>
+#include <random>
+#include <vector>
+#include <utility>
+
+#define DIST(p, q) (sqrt(pow(p-q, 2)))
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+
+std::mt19937 g_perlin_gen(42);
+std::uniform_real_distribution<> g_offset_dis(-1000.0, 1000.0);
+std::vector<std::pair<double, double>> g_offsets;
 
 using namespace std;
 
-#include <cmath>
-
-#define DIST(p, q) (sqrt(pow(p-q, 2)))
-
-Game::Game() :
-_client(1998, "127.0.0.1") {
+Game::Game() : _client(1998, "127.0.0.1") {
 }
 
-double computeNoiseHeight(PerlinNoise& _perlinNoise, int x, int y) {
-    double scale = 90, persistence = 0.5f, lacunarity = 2.0f;
+double computeNoiseHeight(PerlinNoise& perlinNoise, int x, int y, const std::vector<std::pair<double, double>>& offsets) {
+    float scale = 10, persistence = 0.5, lacunarity = 2;
     int octave = 5;
+    double tmp;
 
-    double amplitude = 1.0f;
-    double frequency = 1.0f;
-    double noiseHeight = 0.0f;
+    float amplitude = 1;
+    float frequency = 1.5;
+    float noiseHeight = 0;
 
-    double cx = 0.0f, cy = 0.0f;
-
-    double dx = x - cx;
-    double dy = y - cy;
-
-    double r = sqrt(dx * dx + dy * dy);
-    double theta = atan2(dy, dx);
-
-    for (int i = 0; i < octave; ++i) {
-        double sx = (r / scale) * frequency;
-        double sy = (theta / (2.0f * M_PI)) * frequency;
-
-        double tmp = _perlinNoise.noise(sx, sy) * 2.0f - 1.0f;
+    for (unsigned int aux = 0; aux < octave; aux++) {
+        double sx = (x / scale * frequency) + offsets[aux].first;
+        double sy = (y / scale * frequency) + offsets[aux].second;
+        tmp = perlinNoise.noise(sx, sy) * 2 - 1;
         noiseHeight += tmp * amplitude;
 
         amplitude *= persistence;
         frequency *= lacunarity;
     }
 
-    return noiseHeight;
+    double maxAmplitude = (1.0 * (1.0 - pow(persistence, octave))) / (1.0 - persistence);
+    return noiseHeight / maxAmplitude;
 }
 
 void Game::process() {
     /*************************************************************************/
-    /*************************  INDEX  ***************************************/
+    /************************* INITIALIZATION  ******************************/
     /*************************************************************************/
-
-    /*************************************************************************/
-    /*************************  INITIALIZATION  ******************************/
-    /*************************************************************************/
-    srand(time(nullptr));
 
     window.changeDrawColor(255, 0, 0, ALPHA_OPAQUE);
     window.clearBackground();
 
-    PerlinNoise perlinNoise(15);
+    // PerlinNoise perlinNoise(8);
+    //
+    // if (g_offsets.empty()) {
+    //     g_offsets.resize(5);
+    //     for (int i = 0; i < 5; ++i) {
+    //         g_offsets[i] = {g_offset_dis(g_perlin_gen), g_offset_dis(g_perlin_gen)};
+    //     }
+    // }
+    //
+    // /*************************************************************************/
+    // /************************* UNITS TESTS  *********************************/
+    // /*************************************************************************/
+    //
+    // unsigned int X = window.getX() / 100, Y = window.getY() / 100;
+    //
+    // struct point {
+    //     int x = -1, y = -1;
+    //     int neighboor = 0;
+    //     double height = 0.0;
+    // };
+    //
+    // std::vector<std::vector<point>> t(X, std::vector<point>(Y));
+    //
+    // for (unsigned int x = 0; x < X; x++) {
+    //     for (unsigned int y = 0; y < Y; y++) {
+    //         point& p = t[x][y];
+    //         p.x = x * 100;
+    //         p.y = y * 100;
+    //         p.height = computeNoiseHeight(perlinNoise, p.x, p.y, g_offsets);
+    //     }
+    // }
+    //
+    // window.changeDrawColor(255, 255, 255, ALPHA_OPAQUE);
+    //
+    // std::random_device rd;
+    // std::mt19937 gen_conn(rd());
+    // std::uniform_real_distribution<> dis_conn(0.0, 1.0);
+    //
+    // for (unsigned int x = 0; x < X; x++) {
+    //     for (unsigned int y = 0; y < Y; y++) {
+    //         point& p = t[x][y];
+    //         double h1 = p.height;
+    //
+    //         for (int dx = -1; dx <= 1; dx++) {
+    //             for (int dy = -1; dy <= 1; dy++) {
+    //                 if (dx == 0 && dy == 0) continue;
+    //
+    //                 int nx = x + dx;
+    //                 int ny = y + dy;
+    //
+    //                 if (nx >= 0 && nx < X && ny >= 0 && ny < Y) {
+    //                     point& q = t[nx][ny];
+    //                     double h2 = q.height;
+    //
+    //                     double height_threshold = 0.1;
+    //                     double connection_probability = 0.5;
+    //
+    //                     if (ABS(h1 - h2) < height_threshold) {
+    //                         if (dis_conn(gen_conn) < connection_probability) {
+    //                             window.drawLine(p.x, p.y, q.x, q.y);
+    //                             p.neighboor++;
+    //                             q.neighboor++;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    //
+    // for (unsigned int x = 0; x < X; x += 1) {
+    //     for (unsigned int y = 0; y < Y; y += 1) {
+    //         point& p = t[x][y];
+    //         char r = 64 + (rand() % 26);
+    //         if (p.neighboor) {
+    //             window.writeText(p.x - 10, p.y - 12, std::string(1, r));
+    //         }
+    //     }
+    // }
 
     /*************************************************************************/
-    /*************************  UNITS TESTS  *********************************/
-    /*************************************************************************/
-
-    unsigned int X = window.getX(), Y = window.getY();
-
-    struct point {
-        int x = -1, y = -1, neighboor = 0;
-    };
-
-    point t[11][11];
-
-    for (int x = 0; x <= 10 ; x += 1) {
-        for (int y = 0; y <= 10; y += 1) {
-            point& p = t[x][y];
-            p.x = x*100;
-            p.y = y*100;
-        }
-    }
-
-    window.changeDrawColor(255, 255, 255, ALPHA_OPAQUE);
-
-    for (int x = 0; x < 11; x++) {
-        for (int y = 0; y < 11; y++) {
-            point& p = t[x][y];
-            double h1 = computeNoiseHeight(perlinNoise, p.x, p.y);
-
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    if (dx == 0 && dy == 0) continue;
-
-                    int nx = x + dx;
-                    int ny = y + dy;
-
-                    if (nx >= 0 && nx < 11 && ny >= 0 && ny < 11) {
-                        point& q = t[nx][ny];
-                        float h2 = computeNoiseHeight(perlinNoise, q.x, q.y);
-
-                        if (std::abs(h1 - h2) < 0.11) {
-                            window.drawLine(p.x, p.y, q.x, q.y);
-                            p.neighboor++;
-                            q.neighboor++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    for (int x = 0; x <= 10 ; x += 1) {
-        for (int y = 0; y <= 10; y += 1) {
-            point& p = t[x][y];
-            char r = 64 + (rand()%26);
-            if (p.neighboor) {
-                window.writeText(p.x - 10, p.y - 12, string(1,r));
-            }
-        }
-    }
-
-    /*************************************************************************/
-    /*************************  DISPLAY **************************************/
+    /************************* DISPLAY **************************************/
     /*************************************************************************/
     //_frameRate.display(window);
     window.refresh();
@@ -130,8 +144,7 @@ void Game::process() {
         _client.sendUDP("hello world");
     }
 
-    if(string s = _client.receiveTCP(); !s.empty())
-        cout << s << endl;
+    if(std::string s = _client.receiveTCP(); !s.empty())
+        std::cout << s << std::endl;
 
-    //user.waitAnyKeyThenClose();
 }

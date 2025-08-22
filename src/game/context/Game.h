@@ -18,8 +18,6 @@ private :
 
     Client _client;
 
-    PerlinNoise _perlinNoise;
-
     FrameRate _frameRate;
 };
 

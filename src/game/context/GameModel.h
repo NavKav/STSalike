@@ -7,10 +7,26 @@
 #include <string>
 #include <queue>
 #include <mutex>
+#include <memory>
 #include <iostream>
 #include <utility>
 #include <chrono>
 #include <thread>
+
+#include "online/ServerConsole.h"
+
+enum MessageType {
+    CONNECTION,
+    DISCONNECTION,
+    PLAYER_INPUT
+};
+
+struct GameMessage {
+    MessageType type;
+    int clientId;
+
+    GameMessage(MessageType type, int clientId) : type(type), clientId(clientId) {}
+};
 
 class GameModel {
 public:
@@ -20,21 +36,22 @@ public:
     void run();
     void stop();
 
-    void addIncomingMessage(int clientId, const std::string& message);
-    void addOutgoingMessage(int clientId, const std::string& message);
+    void addIncomingMessage(std::unique_ptr<GameMessage> message);
+    void addOutgoingMessage(std::unique_ptr<GameMessage> message);
 
-    std::queue<std::pair<int, std::string>> getAndClearOutgoingMessages();
+    std::queue<std::unique_ptr<GameMessage>> getAndClearOutgoingMessages();
 
 private:
     bool _running;
 
-    std::queue<std::pair<int, std::string>> _incomingMessages;
+    std::queue<std::unique_ptr<GameMessage>> _incomingMessages;
     std::mutex _incomingMutex;
 
-    std::queue<std::pair<int, std::string>> _outgoingMessages;
+    std::queue<std::unique_ptr<GameMessage>> _outgoingMessages;
     std::mutex _outgoingMutex;
 
     void processGameLogic();
+    void processGameMessage(std::queue<std::unique_ptr<GameMessage>>& currentIncomingMessages);
 };
 
 #endif //GAMEMODEL_H

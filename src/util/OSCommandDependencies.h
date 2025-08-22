@@ -10,19 +10,19 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 inline void launchServerConsole(const char* executablePath) {
-    std::string cmd = "start \"STSalike Server console\" cmd /k \"chcp 65001 > nul & \"" + std::string(executablePath) + "\" _server < nul\"";
+    std::string cmd = "start \"STSalike Server console\" cmd /c \"chcp 65001 > nul & \"" + std::string(executablePath) + "\" _server < nul\"";
     system(cmd.c_str());
 }
 #elif defined(__linux__)
 inline void launchServerConsole(const char* executablePath) {
     std::string cmd =
-        "gnome-terminal -- bash -c '" + std::string(executablePath) + " _server; exec bash'";
+        "gnome-terminal -- bash -c '" + std::string(executablePath) + " _server;' &";
     system(cmd.c_str());
 }
 #elif defined(__APPLE__) && defined(__MACH__)
 inline void launchServerConsole(const char* executablePath) {
     std::string cmd =
-        "osascript -e 'tell application \"Terminal\" to do script \"" + std::string(executablePath) + " _server\"'";
+        "osascript -e 'tell application \"Terminal\" to do script \"" + std::string(executablePath) + " _server; exit\"' &";
     system(cmd.c_str());
 }
 #else

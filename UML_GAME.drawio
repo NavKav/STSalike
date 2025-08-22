@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2025-06-26T09:32:00.000Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" etag="YOUR_ETAG_HERE" version="24.4.16" type="device">
+<mxfile host="drawio-plugin" modified="2025-08-15T14:13:10.370Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" etag="YDtX7laU_ED2i5cIq8IH" version="22.1.22" type="embed">
   <diagram id="server_architecture" name="Page-1">
-    <mxGraphModel dx="1434" dy="801" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="1144" dy="654" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -31,7 +31,7 @@
         <mxCell id="kU0I44nJ-qM5L_3J_mHk-7" value="Worker Tasks Queue" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="kU0I44nJ-qM5L_3J_mHk-25" vertex="1">
           <mxGeometry x="340" y="75" width="180" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="kU0I44nJ-qM5L_3J_mHk-6" value="Worker Thread Pool (Optional)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="kU0I44nJ-qM5L_3J_mHk-24" vertex="1">
+        <mxCell id="kU0I44nJ-qM5L_3J_mHk-6" value="Worker Thread Pool" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="kU0I44nJ-qM5L_3J_mHk-24" vertex="1">
           <mxGeometry x="410" y="400" width="200" height="60" as="geometry" />
         </mxCell>
         <mxCell id="kU0I44nJ-qM5L_3J_mHk-8" value="Sends/Receives TCP/UDP" style="edgeStyle=orthogonalEdgeStyle;html=1;align=center;verticalAlign=middle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;curved=1;endArrow=block;endFill=0;" parent="1" source="kU0I44nJ-qM5L_3J_mHk-1" target="kU0I44nJ-qM5L_3J_mHk-2" edge="1">
@@ -75,24 +75,25 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="kU0I44nJ-qM5L_3J_mHk-12" value="4. Pushes Outgoing Data" style="edgeStyle=orthogonalEdgeStyle;html=1;align=center;verticalAlign=middle;endArrow=block;endFill=0;" parent="1" source="kU0I44nJ-qM5L_3J_mHk-3" target="kU0I44nJ-qM5L_3J_mHk-5" edge="1">
-          <mxGeometry relative="1" as="geometry">
+          <mxGeometry x="-0.1707" relative="1" as="geometry">
             <mxPoint x="750" y="110" as="sourcePoint" />
             <mxPoint x="490" y="260" as="targetPoint" />
             <Array as="points">
               <mxPoint x="750" y="260" />
               <mxPoint x="490" y="260" />
             </Array>
+            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="kU0I44nJ-qM5L_3J_mHk-13" value="5. Network I/O Sends" style="edgeStyle=orthogonalEdgeStyle;html=1;align=center;verticalAlign=middle;endArrow=block;endFill=0;" parent="1" source="kU0I44nJ-qM5L_3J_mHk-5" target="kU0I44nJ-qM5L_3J_mHk-2" edge="1">
-          <mxGeometry relative="1" as="geometry">
+          <mxGeometry x="0.3636" relative="1" as="geometry">
             <mxPoint x="490" y="260" as="sourcePoint" />
             <mxPoint x="440" y="110" as="targetPoint" />
             <Array as="points">
               <mxPoint x="490" y="290" />
-              <mxPoint x="440" y="290" />
-              <mxPoint x="440" y="110" />
+              <mxPoint x="420" y="290" />
             </Array>
+            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="kU0I44nJ-qM5L_3J_mHk-14" value="6. Pushes Heavy Tasks (Optional)" style="edgeStyle=orthogonalEdgeStyle;html=1;align=center;verticalAlign=middle;endArrow=block;endFill=0;" parent="1" source="kU0I44nJ-qM5L_3J_mHk-3" target="kU0I44nJ-qM5L_3J_mHk-7" edge="1">
@@ -116,13 +117,14 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="kU0I44nJ-qM5L_3J_mHk-16" value="8. Returns Results (if any)" style="edgeStyle=orthogonalEdgeStyle;html=1;align=center;verticalAlign=middle;endArrow=block;endFill=0;dashed=1;" parent="1" source="kU0I44nJ-qM5L_3J_mHk-6" target="kU0I44nJ-qM5L_3J_mHk-3" edge="1">
-          <mxGeometry relative="1" as="geometry">
+          <mxGeometry x="-0.2414" relative="1" as="geometry">
             <mxPoint x="750" y="460" as="sourcePoint" />
             <mxPoint x="750" y="110" as="targetPoint" />
             <Array as="points">
               <mxPoint x="850" y="430" />
               <mxPoint x="850" y="80" />
             </Array>
+            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="kU0I44nJ-qM5L_3J_mHk-20" value="(epoll/IOCP/select)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">

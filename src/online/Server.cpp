@@ -1,6 +1,3 @@
-//
-// Created by NavKav on 18/03/2024.
-//
 #include "Server.h"
 
 using namespace std;
@@ -130,7 +127,6 @@ void Server::runNetworkLoop() {
         if (FD_ISSET(_udpSocket, &readfds)) {
             memset(_buffer, 0, sizeof(_buffer));
             udpPacketHandling(clientAddr);
-
         }
 
         /************************************************************************/
@@ -159,6 +155,8 @@ bool Server::tcpPacketHandling(std::vector<std::unique_ptr<ClientSession>>::iter
 
     if (bytesReceived > 0) {
         _buffer[bytesReceived] = '\0';
+
+        _gameModel.addIncomingMessage(make_unique<GameMessage>(PLAYER_INPUT, (*clientIt)->_id));
         return false;
     } else {
         int clientId = (*clientIt)->_id;
@@ -166,12 +164,15 @@ bool Server::tcpPacketHandling(std::vector<std::unique_ptr<ClientSession>>::iter
 
         if (bytesReceived == 0) {
             ServerConsole::getInstance() << "[TCP] Client ID " << clientId << " déconnecté gracieusement." << endl;
+            _gameModel.addIncomingMessage(make_unique<GameMessage>(DISCONNECTION, clientId));
         } else {
             if (errCode == SOCK_ERR_WOULDBLOCK) {
             } else if (errCode == SOCK_ERR_CONNRESET) {
                 ServerConsole::getInstance() << "[TCP] Client ID " << clientId << " déconnecté de force (Connexion réinitialisée)." << endl;
+                _gameModel.addIncomingMessage(make_unique<GameMessage>(DISCONNECTION, clientId));
             } else {
                 ServerConsole::getInstance() << "[TCP] Erreur FATALE sur socket " << clientSock << " (Client ID " << clientId << "): " << errCode << endl;
+                _gameModel.addIncomingMessage(make_unique<GameMessage>(DISCONNECTION, clientId));
             }
         }
 
@@ -191,24 +192,11 @@ bool Server::tcpPacketHandling(std::vector<std::unique_ptr<ClientSession>>::iter
 void Server::udpPacketHandling(sockaddr_in& clientAddr) {
     int bytesReceived = recvfrom(_udpSocket, _buffer, BUFFER_SIZE - 1, 0, (sockaddr*)&clientAddr, &_addrLen);
 
-    char ipBuffer[INET_ADDRSTRLEN];
-
     if (bytesReceived > 0) {
         _buffer[bytesReceived] = '\0';
-
-        // if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-        //     ServerConsole::getInstance() << "[Chat] Message UDP de " << ipBuffer << ":" << ntohs(clientAddr.sin_port) << " : " << _buffer << endl;
-        // } else {
-        //     ServerConsole::getInstance() << "[UDP] Message ou paquet vide reçu d'une adresse inconnue (conversion IP échouée)." << endl;
-        // }
+        _gameModel.addIncomingMessage(make_unique<GameMessage>(PLAYER_INPUT, 0)); // ID du joueur à déterminer
     } else if (bytesReceived < 0) {
-        ServerConsole::getInstance() << "[UDP] Erreur recvfrom(): " << getSocketError() << " (";
-        if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-            ServerConsole::getInstance() << string(ipBuffer) + ":" + to_string(ntohs(clientAddr.sin_port));
-        } else {
-            ServerConsole::getInstance() << "adresse inconnue";
-        }
-          ServerConsole::getInstance() << ")" << endl;
+        ServerConsole::getInstance() << "[UDP] Erreur recvfrom(): " << getSocketError() << endl;
     }
 }
 
@@ -227,11 +215,11 @@ bool Server::tcpAcceptanceHandling(sockaddr_in& clientAddr) {
     char ipBuffer[INET_ADDRSTRLEN];
     if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
         ServerConsole::getInstance() << "[TCP] Nouvelle connexion acceptée depuis "
-                  << ipBuffer << ":" << ntohs(clientAddr.sin_port) << endl;
+                                     << ipBuffer << ":" << ntohs(clientAddr.sin_port) << endl;
     } else {
         ServerConsole::getInstance() << "[TCP] Nouvelle connexion acceptée avec une erreur de conversion IP : "
-                          << "Code d'erreur (errno) : " << getSocketError()
-                          << ". Vérifiez la famille d'adresses ou la taille du buffer." << endl;
+                                     << "Code d'erreur (errno) : " << getSocketError()
+                                     << ". Vérifiez la famille d'adresses ou la taille du buffer." << endl;
     }
 
     _connectedTcpClients.push_back(make_unique<ClientSession>(
@@ -254,7 +242,7 @@ void Server::processOutgoingMessages() {
     while (!messagesToSend.empty()) {
         auto message = *messagesToSend.front();
         messagesToSend.pop();
-
+        // Logique pour l'envoi de messages aux clients
     }
 }
 
@@ -262,13 +250,13 @@ void Server::sendToTcpClient(int clientId, const string& message) {
     SOCKET targetSocket = INVALID_SOCKET;
 
     auto it = find_if(_connectedTcpClients.begin(), _connectedTcpClients.end(),
-                           [clientId](const unique_ptr<ClientSession>& clientPtr) {
-                               return clientPtr->_id == clientId;
-                           });
+                      [clientId](const unique_ptr<ClientSession>& clientPtr) {
+                          return clientPtr->_id == clientId;
+                      });
 
     if (it == _connectedTcpClients.end()) {
         ServerConsole::getInstance() << "[Server] Erreur: Client TCP avec ID " << clientId
-                  << " non trouvé ou déjà déconnecté." << endl;
+                                     << " non trouvé ou déjà déconnecté." << endl;
         return;
     }
 
@@ -282,12 +270,12 @@ void Server::sendToTcpClient(int clientId, const string& message) {
     if (bytesSent == SOCKET_ERROR) {
         int errCode = getSocketError();
         ServerConsole::getInstance() << "[TCP] Erreur lors de l'envoi au client " << clientId
-                  << " (Socket: " << targetSocket << "). Code d'erreur : " << errCode << endl;
+                                     << " (Socket: " << targetSocket << "). Code d'erreur : " << errCode << endl;
     } else if (bytesSent == 0) {
         ServerConsole::getInstance() << "[TCP] send() pour client " << clientId << " a envoyé 0 octets. Socket fermée ?" << endl;
     } else if (bytesSent < dataSize) {
         ServerConsole::getInstance() << "[TCP] send() pour client " << clientId << " : Seulement "
-                  << bytesSent << " octets envoyés sur " << dataSize << ". (Message tronqué ou buffer plein)." << endl;
+                                     << bytesSent << " octets envoyés sur " << dataSize << ". (Message tronqué ou buffer plein)." << endl;
     } else {
         ServerConsole::getInstance() << "[TCP] Message envoyé à client " << clientId << " (" << bytesSent << " octets)." << endl;
     }

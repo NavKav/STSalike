@@ -1,6 +1,3 @@
-//
-// Created by NavKav on 26/06/2025.
-//
 #ifndef GAMEMODEL_H
 #define GAMEMODEL_H
 
@@ -14,6 +11,7 @@
 #include <thread>
 
 #include "online/ServerConsole.h"
+#include "util/ThreadPool.h"
 
 enum MessageType {
     CONNECTION,
@@ -52,6 +50,8 @@ private:
 
     void processGameLogic();
     void processGameMessage(std::queue<std::unique_ptr<GameMessage>>& currentIncomingMessages);
+    Task createTaskFromMessage(std::unique_ptr<GameMessage> message);
+
 };
 
 #endif //GAMEMODEL_H

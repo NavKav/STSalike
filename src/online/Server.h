@@ -17,6 +17,7 @@
 #include "ClientSession.h"
 #include "game/context/GameModel.h"
 #include "ServerConsole.h"
+#include "util/ThreadPool.h"
 
 #define BUFFER_SIZE 1024
 
@@ -52,7 +53,6 @@ private :
     unsigned int _connectedTotal = 0;
 
     GameModel _gameModel;
-
     std::thread _gameModelThread;
 };
 

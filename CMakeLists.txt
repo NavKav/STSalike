@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_compile_definitions(_USE_MATH_DEFINES)
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
@@ -16,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/Modules" ${CMAKE_MODULE_PATH})
 
 find_package(SDL2 REQUIRED)
-find_package(SDL2_Image REQUIRED)
+find_package(SDL2_image REQUIRED)
 find_package(SDL2_ttf REQUIRED)
 
 if(WIN32)
@@ -42,23 +41,23 @@ else()
 endif()
 
 file(GLOB_RECURSE SOURCES
-        src/*.cpp
-        src/*/*.cpp
-        src/*/*/*.cpp
-        src/*/*/*/*.cpp
-        src/*/*/*/*/*.cpp
+    src/*.cpp
+    src/*/*.cpp
+    src/*/*/*.cpp
+    src/*/*/*/*.cpp
+    src/*/*/*/*/*.cpp
 )
 
 add_executable(STSalike ${SOURCES}
         src/core/InputDefinition.h)
 
+# Includes
 target_include_directories(STSalike PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-        ${SDL2_INCLUDE_DIR}
-        ${SDL2_IMAGE_INCLUDE_DIR}
-        ${SDL2_TTF_INCLUDE_DIR}
+    ${PROJECT_SOURCE_DIR}/src
+    ${SDL2_INCLUDE_PATH}
 )
 
+# Link les bonnes libs selon la plateforme
 target_link_libraries(STSalike PRIVATE
         ${SDL2_TTF_LIBRARIES}
         ${SDL2_IMAGE_LIBRARIES}

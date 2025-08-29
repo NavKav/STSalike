@@ -11,17 +11,15 @@
 #include <core/User.h>
 #include <core/InputDefinition.h>
 #include <core/WindowContent.h>
+#include <core/User.h>
+#include <core/Window.h>
 
-
-class MenuWindowContent : public WindowContent {
-public :
+class MenuWindowContent : public WindowContent
+{
+public:
     void process() override;
 
-private :
-
-
+private:
 };
 
-
-
-#endif //MENUWINDOWCONTENT_H
+#endif // MENUWINDOWCONTENT_H

@@ -13,10 +13,10 @@ using namespace std;
 
 using namespace std::filesystem;
 
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    if (argc == 2 && !strcmp(argv[1], "_server")) {
+    if (argc == 2 && !strcmp(argv[1], "_server"))
+    {
         window.close();
         user.close();
 
@@ -25,14 +25,13 @@ int main(int argc, char* argv[])
 
         return 0;
     }
+    // teub
 
-
-    //launchServerConsole(argv[0]);
-
+    // launchServerConsole(argv[0]);
 
     // (32 x 40) x (32 x 24)
-    //player.setWindowContent(new MenuWindowContent());
-    //player.setWindowContent(new OptionWindowContent());
+    // player.setWindowContent(new MenuWindowContent());
+    // player.setWindowContent(new OptionWindowContent());
     user.setWindowContent(new MenuWindowContent());
     user.start();
     return EXIT_SUCCESS;

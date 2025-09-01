@@ -2,7 +2,9 @@
 
 using namespace std;
 
-GameModel::GameModel() : _running(false) {
+GameModel::GameModel() :
+_running(false),
+_mapModel(1) {
 }
 
 GameModel::~GameModel() {
@@ -38,7 +40,7 @@ void GameModel::run() {
             this_thread::sleep_for(sleepDuration);
         }
     }
-    ServerConsole::getInstance() << "[GameModel] Thread de logique de jeu arrêté." << endl;
+    ServerConsole << "[GameModel] Thread de logique de jeu arrêté." << endl;
 }
 
 void GameModel::stop() {
@@ -71,14 +73,42 @@ void GameModel::processGameMessage(queue<unique_ptr<GameMessage>>& currentIncomi
 
         Task task = createTaskFromMessage(move(message));
 
-        ThreadPool::getInstance().enqueue(move(task));
+        ThreadPool.enqueue(move(task));
     }
 }
 
 Task GameModel::createTaskFromMessage(std::unique_ptr<GameMessage> message) {
+    switch (message->type) {
+    case CONNECTION :
+        return createTaskFromMessageCONNECTION(std::move(message));
+        break;
+    case DISCONNECTION :
+        return createTaskFromMessageCONNECTION(std::move(message));
+        break;
+    case PLAYER_INPUT :
+        return createTaskFromMessageINPUT(std::move(message));
+        break;
+    }
+    return [](){};
+}
+
+Task GameModel::createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> message) {
     return [this, message = std::move(message)]() mutable {
-        // TODO: Fill this section with your logic.
-        // The 'message' variable (a unique_ptr) is available here.
-        // Use a switch statement to handle different message types.
+        int clientId = message->clientId;
+        {
+            std::unique_lock<std::shared_mutex> lock(_playersMutex);
+            if (_players.find(clientId) == _players.end()) {
+                _players.emplace(clientId, std::make_unique<Player>(clientId, 0, 0));
+                ServerConsole << "Player " << clientId << " spawned at " << _mapModel.getAdjacentNodes(0, 0).size() << std::endl;
+            } else {
+                ServerConsole << "Player " << clientId << " already exists." << std::endl;
+                return;
+            }
+        }
+    };
+}
+
+Task GameModel::createTaskFromMessageINPUT(std::unique_ptr<GameMessage> message) {
+    return [this, message = std::move(message)]() mutable {
     };
 }

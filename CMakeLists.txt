@@ -48,6 +48,10 @@ add_executable(STSalike ${SOURCES}
         src/game/map/MapModel.h
         src/online/ServerConsole.h
         src/util/ThreadPool.h
+        src/game/context/GameMessage.h
+        src/game/Player/Player.cpp
+        src/game/Player/Player.h
+        src/util/Serializer.h
 )
 #TFF
 include_directories(${PROJECT_SOURCE_DIR}/src ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR}) #inclusion des dossier nécessaire pour le

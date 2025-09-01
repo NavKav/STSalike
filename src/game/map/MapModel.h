@@ -7,12 +7,29 @@
 
 #include <cmath>
 #include <iostream>
+#include <mutex>
 #include <random>
+#include <unordered_map>
 #include <vector>
 #include <utility>
 #include "util/PerlinNoise.h"
 
-struct Point {
+struct Coords {
+    int x, y;
+
+    bool operator==(const Coords& other) const {
+        return x == other.x && y == other.y;
+    }
+};
+
+struct CoordsHash {
+    std::size_t operator()(const Coords& c) const {
+        std::size_t h1 = std::hash<int>{}(c.x);
+        std::size_t h2 = std::hash<int>{}(c.y);
+        return h1 ^ (h2 << 1);
+    }
+};
+struct Node {
     int x = -1, y = -1;
     int neighbor = 0;
     double height = 0.0;
@@ -22,23 +39,27 @@ struct Point {
 class MapModel {
 public :
     MapModel(unsigned int seed);
-    Point getNode(int x, int y);
+    Node getNode(int x, int y);
+    std::vector<Node> getAdjacentNodes(int x, int y);
 
 private :
-    PerlinNoise _perlinNoise;
+    PerlinNoise _perlinNoiseNode;
+    std::mutex _perlinNoiseNodeMutex;
+
     std::vector<std::pair<double, double>> _offsets;
+    std::mutex _offsetsMutex;
 
     unsigned int _seed;
 
     std::random_device _rd;
-    std::mt19937 _randAlg;
-    std::uniform_real_distribution<> _unifRealDistrib;
+
     double _heightThreshold = 0.1;
     double _connectionProbability = 0.5;
 
-    double computeNoiseHeight(int x, int y);
+    std::unordered_map<Coords, Node, CoordsHash> _nodeCache;
+    std::mutex _cacheMutex;
+
+    double computeNodeHeight(int x, int y);
 };
-
-
 
 #endif //MAPMODEL_H

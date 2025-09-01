@@ -45,5 +45,6 @@ private:
     std::mutex m_mutex;
 };
 
+inline ServerConsole& ServerConsole = ServerConsole::getInstance();
 
 #endif //SERVERCONSOLE_H

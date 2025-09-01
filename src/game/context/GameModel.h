@@ -8,23 +8,14 @@
 #include <iostream>
 #include <utility>
 #include <chrono>
+#include <shared_mutex>
 #include <thread>
 
 #include "online/ServerConsole.h"
 #include "util/ThreadPool.h"
-
-enum MessageType {
-    CONNECTION,
-    DISCONNECTION,
-    PLAYER_INPUT
-};
-
-struct GameMessage {
-    MessageType type;
-    int clientId;
-
-    GameMessage(MessageType type, int clientId) : type(type), clientId(clientId) {}
-};
+#include "game/context/GameMessage.h"
+#include "game/map/MapModel.h"
+#include "game/Player/Player.h"
 
 class GameModel {
 public:
@@ -48,9 +39,16 @@ private:
     std::queue<std::unique_ptr<GameMessage>> _outgoingMessages;
     std::mutex _outgoingMutex;
 
+    std::unordered_map<int, std::unique_ptr<Player>> _players;
+    std::shared_mutex _playersMutex;
+
+    MapModel _mapModel;
+
     void processGameLogic();
     void processGameMessage(std::queue<std::unique_ptr<GameMessage>>& currentIncomingMessages);
     Task createTaskFromMessage(std::unique_ptr<GameMessage> message);
+    Task createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> message);
+    Task createTaskFromMessageINPUT(std::unique_ptr<GameMessage> message);
 
 };
 

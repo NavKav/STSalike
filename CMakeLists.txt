@@ -4,7 +4,7 @@ project(STSalike CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) # Bonne pratique pour un code standard
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}-static-libgcc -static-libstdc++")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}-static-libgcc")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-dev") # Affiche TOUS les warnings en mode debug
 set(CMAKE_CXX_FLAGS "-O3") # Définit l'optimisation pour la version de publication
@@ -48,10 +48,13 @@ add_executable(STSalike ${SOURCES}
         src/game/map/MapModel.h
         src/online/ServerConsole.h
         src/util/ThreadPool.h
-        src/game/context/GameMessage.h
+        src/online/GameMessage.h
         src/game/Player/Player.cpp
         src/game/Player/Player.h
-        src/util/Serializer.h
+        src/online/Serializer.h
+        src/online/MessageHeader.h
+        src/online/GlobalSerializer.h
+        src/online/GlobalSerializer.cpp
 )
 #TFF
 include_directories(${PROJECT_SOURCE_DIR}/src ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR}) #inclusion des dossier nécessaire pour le

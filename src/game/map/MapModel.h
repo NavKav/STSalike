@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <vector>
 #include <utility>
+
+#include <util/json.hpp>
 #include "util/PerlinNoise.h"
 
 struct Coords {
@@ -29,12 +31,14 @@ struct CoordsHash {
         return h1 ^ (h2 << 1);
     }
 };
+
 struct Node {
     int x = -1, y = -1;
     int neighbor = 0;
     double height = 0.0;
     int edges = 0;
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Node, x, y, neighbor, height, edges)
 
 class MapModel {
 public :

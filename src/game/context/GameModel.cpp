@@ -81,13 +81,10 @@ Task GameModel::createTaskFromMessage(std::unique_ptr<GameMessage> message) {
     switch (message->type) {
     case CONNECTION :
         return createTaskFromMessageCONNECTION(std::move(message));
-        break;
     case DISCONNECTION :
         return createTaskFromMessageCONNECTION(std::move(message));
-        break;
     case PLAYER_INPUT :
         return createTaskFromMessageINPUT(std::move(message));
-        break;
     }
     return [](){};
 }
@@ -105,10 +102,32 @@ Task GameModel::createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> mes
                 return;
             }
         }
+
+        GlobalSerializer.clear();
+
+        Node initialNode = _mapModel.getNode(0, 0);
+        GlobalSerializer.serialize(initialNode, MessageHeaderType::NODE_UPDATE);
+
+        auto adjacentNodeList = _mapModel.getAdjacentNodes(0, 0);
+        for (const auto& n : adjacentNodeList) {
+            GlobalSerializer.serialize(n, MessageHeaderType::NODE_UPDATE);
+        }
+
+        const auto& bufferToSend = GlobalSerializer.getBuffer();
+        ServerConsole << "done" << endl;
+
+        //_outgoingMessages.addMessage(clientId, bufferToSend);
+
     };
 }
 
 Task GameModel::createTaskFromMessageINPUT(std::unique_ptr<GameMessage> message) {
+    return [this, message = std::move(message)]() mutable {
+        ServerConsole << "Player" << message->clientId << "pressed space" << endl;
+    };
+}
+
+Task GameModel::createTaskFromMessageDISCONNECTION(std::unique_ptr<GameMessage> message) {
     return [this, message = std::move(message)]() mutable {
     };
 }

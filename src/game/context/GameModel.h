@@ -13,9 +13,11 @@
 
 #include "online/ServerConsole.h"
 #include "util/ThreadPool.h"
-#include "game/context/GameMessage.h"
+#include "online/GameMessage.h"
 #include "game/map/MapModel.h"
 #include "game/Player/Player.h"
+#include "online/Serializer.h"
+#include "online/GlobalSerializer.h"
 
 class GameModel {
 public:
@@ -49,6 +51,8 @@ private:
     Task createTaskFromMessage(std::unique_ptr<GameMessage> message);
     Task createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> message);
     Task createTaskFromMessageINPUT(std::unique_ptr<GameMessage> message);
+    Task createTaskFromMessageDISCONNECTION(std::unique_ptr<GameMessage> message);
+
 
 };
 

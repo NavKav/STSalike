@@ -14,8 +14,10 @@ enum GameMessageType {
 struct GameMessage {
     GameMessageType type;
     int clientId;
+    std::vector<char> payload;
 
-    GameMessage(GameMessageType type, int clientId) : type(type), clientId(clientId) {}
+    GameMessage(GameMessageType type, int clientId, std::vector<char> payload)
+        : type(type), clientId(clientId), payload(std::move(payload)) {}
 };
 
 #endif //GAMEMESSAGE_H

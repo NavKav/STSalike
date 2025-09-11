@@ -28,9 +28,8 @@ public:
     void stop();
 
     void addIncomingMessage(std::unique_ptr<GameMessage> message);
-    void addOutgoingMessage(std::unique_ptr<GameMessage> message);
-
-    std::queue<std::unique_ptr<GameMessage>> getAndClearOutgoingMessages();
+    void addOutgoingMessage(int clientId, const std::vector<char>& buffer);
+    bool getOutgoingMessage(std::pair<int, std::vector<char>>& message);
 
 private:
     bool _running;
@@ -38,7 +37,7 @@ private:
     std::queue<std::unique_ptr<GameMessage>> _incomingMessages;
     std::mutex _incomingMutex;
 
-    std::queue<std::unique_ptr<GameMessage>> _outgoingMessages;
+    std::queue<std::pair<int, std::vector<char>>> _outgoingMessages;
     std::mutex _outgoingMutex;
 
     std::unordered_map<int, std::unique_ptr<Player>> _players;

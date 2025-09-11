@@ -16,9 +16,7 @@ void GameModel::run() {
 
     while (_running) {
         auto currentFrameTime = chrono::high_resolution_clock::now();
-        auto deltaTime = chrono::duration_cast<chrono::milliseconds>(currentFrameTime - lastFrameTime);
         lastFrameTime = currentFrameTime;
-
         auto processingStartTime = chrono::high_resolution_clock::now();
 
         queue<unique_ptr<GameMessage>> currentIncomingMessages;
@@ -52,20 +50,24 @@ void GameModel::addIncomingMessage(unique_ptr<GameMessage> message) {
     _incomingMessages.push(move(message));
 }
 
-void GameModel::addOutgoingMessage(unique_ptr<GameMessage> message) {
-    lock_guard<mutex> lock(_outgoingMutex);
-    _outgoingMessages.push(move(message));
+void GameModel::addOutgoingMessage(int clientId, const std::vector<char>& buffer) {
+    std::lock_guard<std::mutex> lock(_outgoingMutex);
+    _outgoingMessages.emplace(clientId, buffer);
 }
 
-queue<unique_ptr<GameMessage>> GameModel::getAndClearOutgoingMessages() {
-    lock_guard<mutex> lock(_outgoingMutex);
-    queue<unique_ptr<GameMessage>> messagesToReturn;
-    _outgoingMessages.swap(messagesToReturn);
-    return messagesToReturn;
+bool GameModel::getOutgoingMessage(std::pair<int, std::vector<char>>& message) {
+    std::lock_guard<std::mutex> lock(_outgoingMutex);
+    if (_outgoingMessages.empty()) {
+        return false;
+    }
+    message = std::move(_outgoingMessages.front());
+    _outgoingMessages.pop();
+    return true;
 }
 
 void GameModel::processGameLogic() {
 }
+
 void GameModel::processGameMessage(queue<unique_ptr<GameMessage>>& currentIncomingMessages) {
     while (!currentIncomingMessages.empty()) {
         unique_ptr<GameMessage> message = move(currentIncomingMessages.front());
@@ -114,10 +116,7 @@ Task GameModel::createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> mes
         }
 
         const auto& bufferToSend = GlobalSerializer.getBuffer();
-        ServerConsole << "done" << endl;
-
-        //_outgoingMessages.addMessage(clientId, bufferToSend);
-
+        this->addOutgoingMessage(clientId, bufferToSend);
     };
 }
 

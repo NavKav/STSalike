@@ -5,6 +5,7 @@
 #ifndef CLIENTSOCKET_H
 #define CLIENTSOCKET_H
 
+#include <vector>
 #include "OSMultiplayerDependencies.h"
 
 
@@ -19,6 +20,7 @@ private:
     SOCKET _tcpSocket;
     sockaddr_in _tcpAddr;
     int _id;
+    std::vector<char> _incomingBuffer;
 };
 
 

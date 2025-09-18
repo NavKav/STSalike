@@ -11,7 +11,7 @@
 #include <string>
 
 #include "OSMultiplayerDependencies.h"
-#include "MessageHeader.h"
+#include "GameMessage.h"
 #include "util/json.hpp"
 
 template <typename T>
@@ -26,11 +26,11 @@ public:
     using SerializedBuffer = std::vector<char>;
 
     template<JSONable T>
-    void serialize(const T& data, MessageHeaderType messageType) {
+    void serialize(const T& data, MessageType messageType) {
         std::vector<uint8_t> msgpack_buffer = nlohmann::json::to_msgpack(data);
 
         MessageHeader header;
-        header.type = static_cast<MessageHeaderType>(htonl(static_cast<uint32_t>(messageType)));
+        header.type = messageType;
         header.size = htonl(static_cast<uint32_t>(msgpack_buffer.size()));
 
         _buffer.insert(_buffer.end(), reinterpret_cast<char*>(&header), reinterpret_cast<char*>(&header) + sizeof(MessageHeader));
@@ -43,7 +43,7 @@ public:
     }
 
     template<JSONable T>
-    bool deserialize(T& data, MessageHeaderType& messageType) {
+    bool deserialize(T& data, MessageType& messageType) {
         if (_offset + sizeof(MessageHeader) > _buffer.size()) {
             return false;
         }
@@ -52,7 +52,7 @@ public:
         std::memcpy(&header, _buffer.data() + _offset, sizeof(MessageHeader));
         _offset += sizeof(MessageHeader);
 
-        auto type = static_cast<MessageHeaderType>(ntohl(static_cast<uint32_t>(header.type)));
+        auto type = header.type;
         uint32_t size = ntohl(header.size);
 
         if (_offset + size > _buffer.size()) {
@@ -79,8 +79,8 @@ public:
         _offset = 0;
     }
 
-    const std::vector<char>& getBuffer() const {
-        return _buffer;
+    std::vector<char>&& getBuffer() {
+        return std::move(_buffer);
     }
 
     bool hasMoreData() const {

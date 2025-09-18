@@ -76,42 +76,53 @@ void Client::sendUDP(const string& s) {
     }
 }
 
-string Client::receiveTCP() {
-    memset(_receiveBuffer, 0, CLIENT_BUFFER_SIZE);
 
-    int bytesReceived = ::recv(_tcpSocket, _receiveBuffer, CLIENT_BUFFER_SIZE - 1, 0);
+std::unique_ptr<GameMessage> Client::receiveTCP() {
+    std::vector<char> tempBuffer(CLIENT_BUFFER_SIZE);
+    int bytesReceived = ::recv(_tcpSocket, tempBuffer.data(), tempBuffer.size(), 0);
 
     if (bytesReceived > 0) {
-        _receiveBuffer[bytesReceived] = '\0';
-        cout << "[Client TCP] Message reçu du serveur: \"" << _receiveBuffer << "\"" << endl;
-        return string(_receiveBuffer);
+        _incomingBuffer.insert(_incomingBuffer.end(), tempBuffer.begin(), tempBuffer.begin() + bytesReceived);
     } else if (bytesReceived == 0) {
-        cout << "[Client TCP] Serveur déconnecté" << endl;
+        std::cout << "[Client TCP] Serveur déconnecté" << std::endl;
         disconnectSocket(_tcpSocket);
         _tcpSocket = INVALID_SOCKET;
-        return "";
+        return nullptr;
     } else {
         int errCode = getSocketError();
-        if (errCode == SOCK_ERR_WOULDBLOCK || errCode == SOCK_ERR_INTR) {
-            return "";
+        if (errCode != SOCK_ERR_WOULDBLOCK && errCode != SOCK_ERR_INTR) {
+            std::cerr << "[Client TCP] Erreur grave lors de la réception du serveur. Déconnexion. Code: " << errCode << std::endl;
+            disconnectSocket(_tcpSocket);
+            _tcpSocket = INVALID_SOCKET;
         }
-
-        cerr << "[Client TCP] Erreur grave lors de la réception du serveur. Déconnexion. Code: " << errCode << endl;
-        disconnectSocket(_tcpSocket);
-        _tcpSocket = INVALID_SOCKET;
-        return "";
+        return nullptr;
     }
+
+    if (_incomingBuffer.size() >= sizeof(MessageHeader)) {
+        MessageHeader header;
+        memcpy(&header, _incomingBuffer.data(), sizeof(MessageHeader));
+
+        if (_incomingBuffer.size() >= sizeof(MessageHeader) + header.size) {
+            std::vector<char> payload(
+                    _incomingBuffer.begin() + sizeof(MessageHeader),
+                    _incomingBuffer.begin() + sizeof(MessageHeader) + header.size
+            );
+
+            _incomingBuffer.erase(_incomingBuffer.begin(), _incomingBuffer.begin() + sizeof(MessageHeader) + header.size);
+
+            return std::make_unique<GameMessage>(header.type, -1, std::move(payload));
+        }
+    }
+
+    return nullptr;
 }
 
-void Client::sendTCP(const string& s) const {
-    const char* message = s.c_str();
-    int msgLen = static_cast<int>(strlen(message));
+void Client::sendTCP(const std::vector<char>& serializedMessage) {
     int totalSent = 0;
-
-    while (totalSent < msgLen) {
-        int sent = send(_tcpSocket, message + totalSent, msgLen - totalSent, 0);
+    while (totalSent < serializedMessage.size()) {
+        int sent = send(_tcpSocket, serializedMessage.data() + totalSent, serializedMessage.size() - totalSent, 0);
         if (sent == SOCKET_ERROR) {
-            cout << "send() failed with error code: " << getSocketError() << endl;
+            std::cout << "send() failed with error code: " << getSocketError() << std::endl;
             exit(EXIT_FAILURE);
         }
         totalSent += sent;

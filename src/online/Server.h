@@ -18,6 +18,7 @@
 #include "game/context/GameModel.h"
 #include "ServerConsole.h"
 #include "util/ThreadPool.h"
+#include "GameMessage.h"
 
 #define BUFFER_SIZE 1024
 
@@ -31,13 +32,14 @@ public:
 
 private :
     void udpPacketHandling(sockaddr_in& clientAddr);
-    bool tcpPacketHandling(std::vector<std::unique_ptr<ClientSession>>::iterator& clientIt, SOCKET clientSock);
+    bool tcpPacketHandling(std::map<int, std::unique_ptr<ClientSession>>::iterator& clientIt);
     bool tcpAcceptanceHandling(sockaddr_in& clientAddr);
     void processOutgoingMessages();
 
-    void sendToTcpClient(int clientId, const std::string& message);
+    void sendToTcpClient(int clientId, const std::vector<char>& buffer);
 
-    std::vector<std::unique_ptr<ClientSession>> _connectedTcpClients;
+
+    std::map<int, std::unique_ptr<ClientSession>> _connectedTcpClients;
     std::vector<SOCKET> _clientsToProcess;
 
     SOCKET _udpSocket;

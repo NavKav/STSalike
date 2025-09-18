@@ -137,14 +137,17 @@ void Game::process() {
     /*************************************************************************/
     //_frameRate.display(window);
     window.refresh();
-    if (user[SDL_SCANCODE_SPACE].pressed) {
+    /*if (user[SDL_SCANCODE_SPACE].pressed) {
         _client.sendTCP("a appuye sur espace");
     }
     if (user[SDL_SCANCODE_Q].pressed) {
         _client.sendUDP("hello world");
+    }*/
+
+    auto gameMessage = _client.receiveTCP();
+    if (gameMessage != nullptr) {
+        cout << "messag reçu" << endl;
     }
 
-    if(std::string s = _client.receiveTCP(); !s.empty())
-        std::cout << s << std::endl;
 
 }

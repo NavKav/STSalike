@@ -87,7 +87,7 @@ void Server::runNetworkLoop() {
         SOCKET maxSocket = max(_udpSocket, _tcpSocket);
 
         for (const auto& clientPtr : _connectedTcpClients) {
-            SOCKET clientSock = clientPtr->_tcpSocket;
+            SOCKET clientSock = clientPtr.second->_tcpSocket;
             FD_SET(clientSock, &readfds);
             if (clientSock > maxSocket) {
                 maxSocket = clientSock;
@@ -130,9 +130,9 @@ void Server::runNetworkLoop() {
 
         auto it = _connectedTcpClients.begin();
         while (it != _connectedTcpClients.end()) {
-            SOCKET clientSock = (*it)->_tcpSocket;
+            SOCKET clientSock = it->second->_tcpSocket;
             if (FD_ISSET(clientSock, &readfds)) {
-                if (tcpPacketHandling(it, clientSock)) {
+                if (tcpPacketHandling(it)) {
                     continue;
                 }
             }
@@ -143,35 +143,52 @@ void Server::runNetworkLoop() {
     }
     ServerConsole << "[Server] Thread réseau arrêté." << endl;
 }
+bool Server::tcpPacketHandling(map<int, unique_ptr<ClientSession>>::iterator& clientIt) {
+    auto& clientSession = clientIt->second;
+    SOCKET clientSock = clientSession->_tcpSocket;
 
-bool Server::tcpPacketHandling(std::vector<std::unique_ptr<ClientSession>>::iterator& clientIt, SOCKET clientSock) {
-    memset(_buffer, 0, sizeof(_buffer));
-    int bytesReceived = recv(clientSock, _buffer, BUFFER_SIZE - 1, 0);
+    vector<char> tempBuffer(BUFFER_SIZE);
+    int bytesReceived = recv(clientSock, tempBuffer.data(), tempBuffer.size(), 0);
 
     if (bytesReceived > 0) {
-        _buffer[bytesReceived] = '\0';
+        auto& clientBuffer = clientSession->_incomingBuffer;
+        clientBuffer.insert(clientBuffer.end(), tempBuffer.begin(), tempBuffer.begin() + bytesReceived);
 
-        _gameModel.addIncomingMessage(make_unique<GameMessage>(PLAYER_INPUT, (*clientIt)->_id));
-        return false;
-    } else {
-        int clientId = (*clientIt)->_id;
+        while (clientBuffer.size() >= sizeof(MessageHeader)) {
+            MessageHeader header;
+            memcpy(&header, clientBuffer.data(), sizeof(MessageHeader));
+
+            if (clientBuffer.size() >= sizeof(MessageHeader) + header.size) {
+                vector<char> payload(
+                        clientBuffer.begin() + sizeof(MessageHeader),
+                        clientBuffer.begin() + sizeof(MessageHeader) + header.size
+                );
+
+                _gameModel.addIncomingMessage(make_unique<GameMessage>(
+                        header.type,
+                        clientSession->_id,
+                        std::move(payload)
+                ));
+
+                clientBuffer.erase(clientBuffer.begin(), clientBuffer.begin() + sizeof(MessageHeader) + header.size);
+            } else {
+                break;
+            }
+        }
+    } else { // DECONNEXION
+        int clientId = clientSession->_id;
         int errCode = getSocketError();
 
         if (bytesReceived == 0) {
             ServerConsole << "[TCP] Client ID " << clientId << " déconnecté gracieusement." << endl;
-            _gameModel.addIncomingMessage(make_unique<GameMessage>(DISCONNECTION, clientId));
+        } else if (errCode == SOCK_ERR_CONNRESET) {
+            ServerConsole << "[TCP] Client ID " << clientId << " déconnecté de force (Connexion réinitialisée)." << endl;
         } else {
-            if (errCode == SOCK_ERR_WOULDBLOCK) {
-            } else if (errCode == SOCK_ERR_CONNRESET) {
-                ServerConsole << "[TCP] Client ID " << clientId << " déconnecté de force (Connexion réinitialisée)." << endl;
-                _gameModel.addIncomingMessage(make_unique<GameMessage>(DISCONNECTION, clientId));
-            } else {
-                ServerConsole << "[TCP] Erreur FATALE sur socket " << clientSock << " (Client ID " << clientId << "): " << errCode << endl;
-                _gameModel.addIncomingMessage(make_unique<GameMessage>(DISCONNECTION, clientId));
-            }
+            ServerConsole << "[TCP] Erreur FATALE sur socket " << clientSock << " (Client ID " << clientId << "): " << errCode << endl;
         }
 
         if (errCode != SOCK_ERR_WOULDBLOCK) {
+            _gameModel.addIncomingMessage(make_unique<GameMessage>(MessageType::DISCONNECTION, clientId, vector<char>{}));
             disconnectSocket(clientSock);
             clientIt = _connectedTcpClients.erase(clientIt);
             _connectedTotal--;
@@ -216,60 +233,75 @@ bool Server::tcpAcceptanceHandling(sockaddr_in& clientAddr) {
                                      << ". Vérifiez la famille d'adresses ou la taille du buffer." << endl;
     }
 
-    _connectedTcpClients.push_back(make_unique<ClientSession>(
-            newClientSocket, clientAddr, _idCount
-    ));
+    _connectedTcpClients.emplace(_idCount,
+                                 make_unique<ClientSession>(
+                                         newClientSocket, clientAddr, _idCount
+                                 ));
 
-    _gameModel.addIncomingMessage(make_unique<GameMessage>(CONNECTION, _idCount));
+    vector<char> v;
+
+    _gameModel.addIncomingMessage(make_unique<GameMessage>(MessageType::CONNECTION, _idCount, std::move(v)));
+
+    _connectedTcpClients.at(_idCount)->displayClientInfo();
 
     _idCount ++;
     _connectedTotal ++;
-
-    _connectedTcpClients.back()->displayClientInfo();
 
     return true;
 }
 
 void Server::processOutgoingMessages() {
-    queue<unique_ptr<GameMessage>> messagesToSend = _gameModel.getAndClearOutgoingMessages();
+    queue<pair<int, vector<char>>> messagesToSend;
+    _gameModel.getAndClearOutgoingMessages(messagesToSend);
 
     while (!messagesToSend.empty()) {
-        auto message = *messagesToSend.front();
+        auto message = messagesToSend.front();
         messagesToSend.pop();
+        switch(message.first) {
+            case -1:
+                break;
+            default :
+                sendToTcpClient(message.first, message.second);
+                break;
+        }
     }
 }
 
-void Server::sendToTcpClient(int clientId, const string& message) {
-    SOCKET targetSocket = INVALID_SOCKET;
-
-    auto it = find_if(_connectedTcpClients.begin(), _connectedTcpClients.end(),
-                      [clientId](const unique_ptr<ClientSession>& clientPtr) {
-                          return clientPtr->_id == clientId;
-                      });
-
+void Server::sendToTcpClient(int clientId, const vector<char>& buffer) {
+    auto it = _connectedTcpClients.find(clientId);
     if (it == _connectedTcpClients.end()) {
         ServerConsole << "[Server] Erreur: Client TCP avec ID " << clientId
-                                     << " non trouvé ou déjà déconnecté." << endl;
+                      << " non trouvé ou déjà déconnecté." << endl;
         return;
     }
 
-    targetSocket = (*it)->_tcpSocket;
+    SOCKET targetSocket = it->second->_tcpSocket;
+    const char* data = buffer.data();
+    int dataSize = static_cast<int>(buffer.size());
+    int totalBytesSent = 0;
 
-    const char* data = message.c_str();
-    int dataSize = message.length();
+    while (totalBytesSent < dataSize) {
+        int bytesSent = ::send(targetSocket, data + totalBytesSent, dataSize - totalBytesSent, 0);
 
-    int bytesSent = ::send(targetSocket, data, dataSize, 0);
+        if (bytesSent == SOCKET_ERROR) {
+            int errCode = getSocketError();
+            if (errCode == SOCK_ERR_WOULDBLOCK) {
+                this_thread::sleep_for(chrono::milliseconds(1));
+                continue;
+            }
 
-    if (bytesSent == SOCKET_ERROR) {
-        int errCode = getSocketError();
-        ServerConsole << "[TCP] Erreur lors de l'envoi au client " << clientId
-                                     << " (Socket: " << targetSocket << "). Code d'erreur : " << errCode << endl;
-    } else if (bytesSent == 0) {
-        ServerConsole << "[TCP] send() pour client " << clientId << " a envoyé 0 octets. Socket fermée ?" << endl;
-    } else if (bytesSent < dataSize) {
-        ServerConsole << "[TCP] send() pour client " << clientId << " : Seulement "
-                                     << bytesSent << " octets envoyés sur " << dataSize << ". (Message tronqué ou buffer plein)." << endl;
-    } else {
-        ServerConsole << "[TCP] Message envoyé à client " << clientId << " (" << bytesSent << " octets)." << endl;
+            ServerConsole << "[TCP] Erreur lors de l'envoi au client " << clientId
+                          << ". Code d'erreur : " << errCode << endl;
+            return;
+        }
+
+        if (bytesSent == 0) {
+            ServerConsole << "[TCP] send() pour client " << clientId << " a envoyé 0 octets. Socket fermée ?" << endl;
+            return;
+        }
+
+        totalBytesSent += bytesSent;
     }
+
+    ServerConsole << "[TCP] Message envoyé à client " << clientId << " (" << totalBytesSent << " octets)." << endl;
 }

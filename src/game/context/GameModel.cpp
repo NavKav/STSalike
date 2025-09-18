@@ -50,19 +50,14 @@ void GameModel::addIncomingMessage(unique_ptr<GameMessage> message) {
     _incomingMessages.push(move(message));
 }
 
-void GameModel::addOutgoingMessage(int clientId, const std::vector<char>& buffer) {
+void GameModel::addOutgoingMessage(int clientId, std::vector<char>&& buffer) {
     std::lock_guard<std::mutex> lock(_outgoingMutex);
-    _outgoingMessages.emplace(clientId, buffer);
+    _outgoingMessages.emplace(clientId, std::move(buffer));
 }
 
-bool GameModel::getOutgoingMessage(std::pair<int, std::vector<char>>& message) {
+void GameModel::getAndClearOutgoingMessages(std::queue<std::pair<int, std::vector<char>>>& messages) {
     std::lock_guard<std::mutex> lock(_outgoingMutex);
-    if (_outgoingMessages.empty()) {
-        return false;
-    }
-    message = std::move(_outgoingMessages.front());
-    _outgoingMessages.pop();
-    return true;
+    _outgoingMessages.swap(messages);
 }
 
 void GameModel::processGameLogic() {
@@ -81,11 +76,11 @@ void GameModel::processGameMessage(queue<unique_ptr<GameMessage>>& currentIncomi
 
 Task GameModel::createTaskFromMessage(std::unique_ptr<GameMessage> message) {
     switch (message->type) {
-    case CONNECTION :
+        case MessageType::CONNECTION :
         return createTaskFromMessageCONNECTION(std::move(message));
-    case DISCONNECTION :
-        return createTaskFromMessageCONNECTION(std::move(message));
-    case PLAYER_INPUT :
+    case  MessageType::DISCONNECTION :
+        return createTaskFromMessageDISCONNECTION(std::move(message));
+    case  MessageType::PLAYER_INPUT :
         return createTaskFromMessageINPUT(std::move(message));
     }
     return [](){};
@@ -98,7 +93,7 @@ Task GameModel::createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> mes
             std::unique_lock<std::shared_mutex> lock(_playersMutex);
             if (_players.find(clientId) == _players.end()) {
                 _players.emplace(clientId, std::make_unique<Player>(clientId, 0, 0));
-                ServerConsole << "Player " << clientId << " spawned at " << _mapModel.getAdjacentNodes(0, 0).size() << std::endl;
+                ServerConsole << "Player " << clientId << " spawned." << std::endl;
             } else {
                 ServerConsole << "Player " << clientId << " already exists." << std::endl;
                 return;
@@ -108,15 +103,14 @@ Task GameModel::createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> mes
         GlobalSerializer.clear();
 
         Node initialNode = _mapModel.getNode(0, 0);
-        GlobalSerializer.serialize(initialNode, MessageHeaderType::NODE_UPDATE);
+        GlobalSerializer.serialize(initialNode, MessageType::NODE_UPDATE);
 
         auto adjacentNodeList = _mapModel.getAdjacentNodes(0, 0);
         for (const auto& n : adjacentNodeList) {
-            GlobalSerializer.serialize(n, MessageHeaderType::NODE_UPDATE);
+            GlobalSerializer.serialize(n, MessageType::NODE_UPDATE);
         }
 
-        const auto& bufferToSend = GlobalSerializer.getBuffer();
-        this->addOutgoingMessage(clientId, bufferToSend);
+        this->addOutgoingMessage(clientId, GlobalSerializer.getBuffer());
     };
 }
 

@@ -5,18 +5,28 @@
 #ifndef GAMEMESSAGE_H
 #define GAMEMESSAGE_H
 
-enum GameMessageType {
+#include <cstdint>
+
+enum class MessageType : uint32_t {
     CONNECTION,
     DISCONNECTION,
-    PLAYER_INPUT
+    PLAYER_INPUT,
+    NODE_UPDATE
 };
 
+#pragma pack(push, 1)
+struct MessageHeader {
+    uint32_t size;
+    MessageType type;
+};
+#pragma pack(pop)
+
 struct GameMessage {
-    GameMessageType type;
+    MessageType type;
     int clientId;
     std::vector<char> payload;
 
-    GameMessage(GameMessageType type, int clientId, std::vector<char> payload)
+    GameMessage(MessageType type, int clientId, std::vector<char> payload)
         : type(type), clientId(clientId), payload(std::move(payload)) {}
 };
 

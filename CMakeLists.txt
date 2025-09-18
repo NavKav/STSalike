@@ -52,7 +52,6 @@ add_executable(STSalike ${SOURCES}
         src/game/Player/Player.cpp
         src/game/Player/Player.h
         src/online/Serializer.h
-        src/online/MessageHeader.h
         src/online/GlobalSerializer.h
         src/online/GlobalSerializer.cpp
 )

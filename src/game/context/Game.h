@@ -9,6 +9,7 @@
 #include "core/User.h"
 #include "util/FrameRate.h"
 #include "util/PerlinNoise.h"
+#include "online/GlobalSerializer.h"
 
 class Game {
 public :

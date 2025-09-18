@@ -28,8 +28,8 @@ public:
     void stop();
 
     void addIncomingMessage(std::unique_ptr<GameMessage> message);
-    void addOutgoingMessage(int clientId, const std::vector<char>& buffer);
-    bool getOutgoingMessage(std::pair<int, std::vector<char>>& message);
+    void addOutgoingMessage(int clientId, std::vector<char>&& buffer);
+    void getAndClearOutgoingMessages(std::queue<std::pair<int, std::vector<char>>>& messages);
 
 private:
     bool _running;

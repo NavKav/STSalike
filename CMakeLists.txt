@@ -54,6 +54,8 @@ add_executable(STSalike ${SOURCES}
         src/online/Serializer.h
         src/online/GlobalSerializer.h
         src/online/GlobalSerializer.cpp
+        src/game/map/MapView.cpp
+        src/game/map/MapView.h
 )
 #TFF
 include_directories(${PROJECT_SOURCE_DIR}/src ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR}) #inclusion des dossier nécessaire pour le

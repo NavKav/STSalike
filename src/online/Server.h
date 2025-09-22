@@ -27,6 +27,7 @@ public:
     explicit Server(int port);
     ~Server();
     void start();
+    void stop();
 
     void runNetworkLoop();
 
@@ -47,7 +48,7 @@ private :
     sockaddr_in _server{};
     socklen_t  _addrLen{};
 
-    bool _serverToggle = true;
+    std::atomic<bool> _serverToggle{true};
 
     char _buffer[BUFFER_SIZE] = {};
 

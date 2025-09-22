@@ -74,13 +74,25 @@ public:
         }
     }
 
+    template<JSONable T>
+    bool deserialize(T& data, const std::vector<char>& payload) {
+        try {
+            nlohmann::json j = nlohmann::json::from_msgpack(payload);
+            data = j.get<T>();
+            return true;
+        } catch (const nlohmann::json::exception& e) {
+            std::cerr << "Erreur de deserialisation: " << e.what() << std::endl;
+            return false;
+        }
+    }
+
     void clear() {
         _buffer.clear();
         _offset = 0;
     }
 
-    std::vector<char>&& getBuffer() {
-        return std::move(_buffer);
+    const std::vector<char>& getBuffer() {
+        return _buffer;
     }
 
     bool hasMoreData() const {

@@ -42,7 +42,6 @@ private :
     bool takeInput(const SDL_Event& event);
     unsigned int _numberKeyDown = 0;
     WindowContent* _windowContent;
-    Window& _window;
 };
 
 inline User user(window, nullptr);

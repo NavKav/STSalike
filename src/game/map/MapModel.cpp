@@ -6,6 +6,17 @@
 
 using namespace std;
 
+const Coords MapModel::_neighborOffsets[8] = {
+    {-1, 1},
+    {0, 1},
+    {1, 1},
+    {1, 0},
+    {1, -1},
+    {0, -1},
+    {-1, -1},
+    {-1, 0}
+};
+
 MapModel::MapModel(unsigned int seed) :
 _seed(seed),
 _perlinNoiseNode(seed)
@@ -62,25 +73,20 @@ Node MapModel::getNode(int x, int y) {
     p.height = computeNodeHeight(x, y);
 
     int neighborIndex = 0;
-    for (int i = -1; i <= 1; i++) {
-        for (int j = -1; j <= 1; j++) {
-            if (i == 0 && j == 0) continue;
+    for (int i = 0; i < 8; ++i) {
+        Coords neighborCoords = {x + _neighborOffsets[i].x, y + _neighborOffsets[i].y};
+        double neighborHeight;
 
-            Coords neighborCoords = {x + i, y + j};
-            double neighborHeight;
+        if (_nodeCache.contains(neighborCoords)) {
+            neighborHeight = _nodeCache.at(neighborCoords).height;
+        } else {
+            neighborHeight = computeNodeHeight(x + _neighborOffsets[i].x, y + _neighborOffsets[i].y);
+        }
 
-            if (_nodeCache.contains(neighborCoords)) {
-                neighborHeight = _nodeCache.at(neighborCoords).height;
-            } else {
-                neighborHeight = computeNodeHeight(x + i, y + j);
-            }
+        double edge_value = p.height + neighborHeight;
 
-            double edge_value = p.height + neighborHeight;
-
-            if (std::abs(p.height - neighborHeight) < _heightThreshold && edge_value < _connectionProbability) {
-                p.edges |= (1 << neighborIndex);
-            }
-            neighborIndex++;
+        if (std::abs(p.height - neighborHeight) < _heightThreshold && edge_value < _connectionProbability) {
+            p.edges |= (1 << i);
         }
     }
     _nodeCache[coords] = p;

@@ -48,7 +48,7 @@ Server::Server(int port) : _gameModel() {
 }
 
 Server::~Server() {
-    _serverToggle = false;
+    _serverToggle.store(false);
     _gameModel.stop();
 
     if (_gameModelThread.joinable()) {
@@ -66,12 +66,16 @@ void Server::start() {
     runNetworkLoop();
 }
 
+void Server::stop() {
+    _serverToggle.store(false);
+}
+
 void Server::runNetworkLoop() {
     fd_set readfds;
     sockaddr_in clientAddr{};
     timeval timeout{};
 
-    while (_serverToggle) {
+    while (_serverToggle.load()) {
         _addrLen = sizeof(clientAddr);
         memset(&clientAddr, 0, _addrLen);
         _clientsToProcess.clear();
@@ -101,7 +105,7 @@ void Server::runNetworkLoop() {
 
         if (activity == SOCKET_ERROR) {
             ServerConsole << "select() error: " << getSocketError() << endl;
-            if (!_serverToggle) break;
+            if (!_serverToggle.load()) break;
             continue;
         }
 
@@ -193,7 +197,7 @@ bool Server::tcpPacketHandling(map<int, unique_ptr<ClientSession>>::iterator& cl
             clientIt = _connectedTcpClients.erase(clientIt);
             _connectedTotal--;
             if (_connectedTotal == 0) {
-                _serverToggle = false;
+                _serverToggle.store(false);
             }
             return true;
         }

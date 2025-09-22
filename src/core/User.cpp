@@ -6,8 +6,7 @@
 
 using namespace std;
 
-User::User(Window& window, WindowContent* windowContent) : _windowContent(windowContent),
-_window(window)
+User::User(Window& window, WindowContent* windowContent) : _windowContent(windowContent)
 {
 }
 

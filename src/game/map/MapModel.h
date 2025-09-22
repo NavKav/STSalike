@@ -34,11 +34,10 @@ struct CoordsHash {
 
 struct Node {
     int x = -1, y = -1;
-    int neighbor = 0;
     double height = 0.0;
     int edges = 0;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Node, x, y, neighbor, height, edges)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Node, x, y, height, edges)
 
 class MapModel {
 public :
@@ -62,6 +61,7 @@ private :
 
     std::unordered_map<Coords, Node, CoordsHash> _nodeCache;
     std::mutex _cacheMutex;
+    static const Coords _neighborOffsets[8];
 
     double computeNodeHeight(int x, int y);
 };

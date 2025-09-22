@@ -73,6 +73,7 @@ private :
 
 };
 
-inline Window window("STS Alike", 250, 130);
+// (32 x 40) x (32 x 24)
+inline Window window("STS Alike", 500, 500);
 
 #endif //PROJECTTT_WINDOW_H

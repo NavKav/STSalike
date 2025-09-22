@@ -50,7 +50,7 @@ void GameModel::addIncomingMessage(unique_ptr<GameMessage> message) {
     _incomingMessages.push(move(message));
 }
 
-void GameModel::addOutgoingMessage(int clientId, std::vector<char>&& buffer) {
+void GameModel::addOutgoingMessage(int clientId, const std::vector<char>& buffer) {
     std::lock_guard<std::mutex> lock(_outgoingMutex);
     _outgoingMessages.emplace(clientId, std::move(buffer));
 }

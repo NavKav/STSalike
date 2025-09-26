@@ -5,14 +5,15 @@
 #ifndef ARPG_STORYBOARD_GAME_H
 #define ARPG_STORYBOARD_GAME_H
 
-#include <online/Client.h>
 #include <cmath>
 #include <iostream>
 #include <random>
 #include <vector>
 #include <utility>
+#include "core/Window.h"
+#include "online/Client.h"
 #include "util/FrameRate.h"
-#include "online/GlobalSerializer.h"
+#include "online/Serializer.h"
 #include "game/map/MapModel.h"
 #include "game/map/MapView.h"
 

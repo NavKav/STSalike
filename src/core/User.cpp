@@ -3,11 +3,25 @@
 //
 
 #include "User.h"
+#include <iostream>
 
 using namespace std;
 
-User::User(Window& window, WindowContent* windowContent) : _windowContent(windowContent)
+User::User()
 {
+}
+
+User::~User() {
+    if (_windowContent) {delete _windowContent;}
+}
+
+User& User::getInstance() {
+    static User instance;
+    return instance;
+}
+
+User& user() {
+    return User::getInstance();
 }
 
 void User::start() {
@@ -23,10 +37,6 @@ void User::stop() {
     _boolLoop = false;
 }
 
-
-User::~User() {
-    if (_windowContent) {delete _windowContent;}
-}
 
 bool User::takeInput(const SDL_Event &event) {
     if (event.type == SDL_QUIT || event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
@@ -105,55 +115,3 @@ void User::waitAnyKeyThenClose() {
 void User::close() {
     stop();
 }
-
-
-/*
-void Player::start() {
-    while(_boolLoop) {
-        SDL_Event event;
-        while(SDL_PollEvent(&event)) {
-            Input input = takeInput(event);
-            send(input);
-        }
-
-    }
-}
-
-Input Player::takeInput(const SDL_Event &event) {
-    static std::set<SDL_KeyCode> pressedKeys;
-    static std::set<Uint8> pressedButtons;
-    Input input;
-
-    if (event.type == SDL_KEYDOWN) {
-        if (!pressedKeys.count(static_cast<SDL_KeyCode>(event.key.keysym.sym))) {
-            input.key = static_cast<SDL_KeyCode>(event.key.keysym.sym);
-            input.u = time(nullptr);
-            _numberKeyDown++;
-            pressedKeys.insert(static_cast<SDL_KeyCode>(event.key.keysym.sym));
-        }
-    } else if (event.type == SDL_KEYUP) {
-        input.key = static_cast<SDL_KeyCode>(event.key.keysym.sym);
-        input.v = time(nullptr);
-        pressedKeys.erase(static_cast<SDL_KeyCode>(event.key.keysym.sym));
-
-    } else if (event.type == SDL_MOUSEBUTTONDOWN ) {
-        if (!pressedButtons.count(event.button.button)) {
-            input.isMouseEvent = true;
-            input.button = event.button.button;
-            SDL_GetMouseState(reinterpret_cast<int *>(&(input.x)), reinterpret_cast<int *>(&(input.y)));
-            input.u = time(nullptr);
-        }
-    } else if (event.type == SDL_MOUSEBUTTONUP ) {
-        input.isMouseEvent = true;
-        input.button = event.button.button;
-        SDL_GetMouseState(reinterpret_cast<int *>(&(input.x)), reinterpret_cast<int *>(&(input.y)));
-        input.v = time(nullptr);
-        pressedButtons.erase(event.button.button);
-    }
-
-    if (event.key.keysym.sym == SDLK_ESCAPE || event.type == SDL_QUIT ) {
-        stop();
-    }
-    return input;
-}
-*/

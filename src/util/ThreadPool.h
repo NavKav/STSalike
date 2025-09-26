@@ -12,12 +12,13 @@
 
 using Task = std::move_only_function<void()>;
 
+class ThreadPool;
+inline ThreadPool& threadPool();
+
 class ThreadPool {
 public:
-    static ThreadPool& getInstance() {
-        static ThreadPool instance;
-        return instance;
-    }
+    ThreadPool(const ThreadPool&) = delete;
+    ThreadPool& operator=(const ThreadPool&) = delete;
 
     void enqueue(Task&& task) {
         {
@@ -29,9 +30,6 @@ public:
         }
         condition.notify_one();
     }
-
-    ThreadPool(const ThreadPool&) = delete;
-    ThreadPool& operator=(const ThreadPool&) = delete;
 
 private:
     ThreadPool() : stop(false) {
@@ -60,6 +58,13 @@ private:
             }
         }
     }
+
+    static ThreadPool& getInstance() {
+        static ThreadPool instance;
+        return instance;
+    }
+
+    friend inline ThreadPool& threadPool();
 
     void workerLoop() {
         while (true) {
@@ -91,7 +96,8 @@ private:
     bool stop;
 };
 
-inline ThreadPool& ThreadPool = ThreadPool::getInstance();
-
+inline ThreadPool& threadPool() {
+    return ThreadPool::getInstance();
+}
 
 #endif // THREADPOOL_H

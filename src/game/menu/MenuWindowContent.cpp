@@ -7,5 +7,5 @@
 using namespace std;
 
 void MenuWindowContent::process() {
-    cout << "ok" << endl;
+
 }

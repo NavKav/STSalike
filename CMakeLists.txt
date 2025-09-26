@@ -52,11 +52,12 @@ add_executable(STSalike ${SOURCES}
         src/game/Player/Player.cpp
         src/game/Player/Player.h
         src/online/Serializer.h
-        src/online/GlobalSerializer.h
-        src/online/GlobalSerializer.cpp
         src/game/map/MapView.cpp
         src/game/map/MapView.h
 )
+
+set_property(TARGET STSalike PROPERTY WIN32_EXECUTABLE OFF)
+
 #TFF
 include_directories(${PROJECT_SOURCE_DIR}/src ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR}) #inclusion des dossier nécessaire pour le
 #développement avec SDL2

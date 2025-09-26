@@ -17,7 +17,6 @@
 #include "game/map/MapModel.h"
 #include "game/Player/Player.h"
 #include "online/Serializer.h"
-#include "online/GlobalSerializer.h"
 
 class GameModel {
 public:

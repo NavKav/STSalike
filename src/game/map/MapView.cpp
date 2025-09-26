@@ -27,13 +27,13 @@ void MapView::displayMap() {
         for (int y = -radius; y <= radius; y++) {
             Coords currentCoords = {origin.x + x, origin.y + y};
             int distance_squared = x*x + y*y;
-            int X = window.getX(), Y = window.getY();
+            int X = window().getX(), Y = window().getY();
 
             if (distance_squared <= radius * radius) {
                 auto it = _knownNodes.find(currentCoords);
                 if (it != nullptr) {
                     Node foundNode = *(it->second);
-                    window.writeText(X/2 + 25 * foundNode.x, Y/2 + 25 * foundNode.y, "N");
+                    window().writeText(X/2 + 25 * foundNode.x, Y/2 + 25 * foundNode.y, "N");
                 }
             }
         }

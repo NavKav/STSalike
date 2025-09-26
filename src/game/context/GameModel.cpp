@@ -38,7 +38,7 @@ void GameModel::run() {
             this_thread::sleep_for(sleepDuration);
         }
     }
-    ServerConsole << "[GameModel] Thread de logique de jeu arrêté." << endl;
+    serverConsole() << "[GameModel] Thread de logique de jeu arrêté." << endl;
 }
 
 void GameModel::stop() {
@@ -70,7 +70,7 @@ void GameModel::processGameMessage(queue<unique_ptr<GameMessage>>& currentIncomi
 
         Task task = createTaskFromMessage(move(message));
 
-        ThreadPool.enqueue(move(task));
+        threadPool().enqueue(move(task));
     }
 }
 
@@ -93,30 +93,30 @@ Task GameModel::createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> mes
             std::unique_lock<std::shared_mutex> lock(_playersMutex);
             if (_players.find(clientId) == _players.end()) {
                 _players.emplace(clientId, std::make_unique<Player>(clientId, 0, 0));
-                ServerConsole << "Player " << clientId << " spawned." << std::endl;
+                serverConsole() << "Player " << clientId << " spawned." << std::endl;
             } else {
-                ServerConsole << "Player " << clientId << " already exists." << std::endl;
+                serverConsole() << "Player " << clientId << " already exists." << std::endl;
                 return;
             }
         }
 
-        GlobalSerializer.clear();
+        serializer().clear();
 
         Node initialNode = _mapModel.getNode(0, 0);
-        GlobalSerializer.serialize(initialNode, MessageType::NODE_UPDATE);
+        serializer().serialize(initialNode, MessageType::NODE_UPDATE);
 
         auto adjacentNodeList = _mapModel.getAdjacentNodes(0, 0);
         for (const auto& n : adjacentNodeList) {
-            GlobalSerializer.serialize(n, MessageType::NODE_UPDATE);
+            serializer().serialize(n, MessageType::NODE_UPDATE);
         }
 
-        this->addOutgoingMessage(clientId, GlobalSerializer.getBuffer());
+        this->addOutgoingMessage(clientId, serializer().getBuffer());
     };
 }
 
 Task GameModel::createTaskFromMessageINPUT(std::unique_ptr<GameMessage> message) {
     return [this, message = std::move(message)]() mutable {
-        ServerConsole << "Player" << message->clientId << "pressed space" << endl;
+        serverConsole() << "Player" << message->clientId << "pressed space" << endl;
     };
 }
 

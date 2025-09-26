@@ -4,6 +4,8 @@
 
 #include "Client.h"
 
+#include "ServerConsole.h"
+
 using namespace std;
 
 Client::Client(int port, const string& ip) {
@@ -45,7 +47,7 @@ Client::Client(int port, const string& ip) {
 
         int err = getSocketError();
         if (err != 0) {
-            cout << "Connexion refusée, nouvelle tentative..." << endl;
+            serverConsole() << "Connexion refusée, nouvelle tentative..." << endl;
             this_thread::sleep_for(chrono::milliseconds(500));
             attempts++;
         } else {
@@ -103,7 +105,7 @@ void Client::sendUDP(const string& s) {
     int slen = sizeof(_server);
 
     while (sendto(_udpSocket, message, msgLen, 0, (sockaddr*)&_server, slen) == SOCKET_ERROR) {
-        cout << "sendto() failed with error code: " << getSocketError() << endl;
+        serverConsole() << "sendto() failed with error code: " << getSocketError() << endl;
         exit(EXIT_FAILURE);
     }
 }
@@ -119,11 +121,14 @@ std::vector<std::unique_ptr<GameMessage>> Client::receiveTCP() {
     } else {
         int errCode = getSocketError();
         if (bytesReceived == 0) {
-            std::cout << "[Client TCP] Serveur déconnecté" << std::endl;
-        } else if (errCode != SOCK_ERR_WOULDBLOCK && errCode != SOCK_ERR_INTR) {
-            std::cerr << "[Client TCP] Erreur grave lors de la réception du serveur. Déconnexion. Code: " << errCode << std::endl;
+            serverConsole() << "[Client TCP] Serveur déconnecté." << std::endl;
+        } else if (errCode == SOCK_ERR_CONNRESET) {
+            serverConsole() << "[Client TCP] Serveur déconnecté (connexion réinitialisée)." << std::endl;
+            disconnectSocket(_tcpSocket);
+            _tcpSocket = INVALID_SOCKET;
         }
-        if (errCode != SOCK_ERR_WOULDBLOCK && errCode != SOCK_ERR_INTR) {
+        // La déconnexion doit être gérée de manière cohérente, peu importe la cause
+        if (bytesReceived == 0 || errCode == 10054) {
             disconnectSocket(_tcpSocket);
             _tcpSocket = INVALID_SOCKET;
         }
@@ -158,7 +163,7 @@ void Client::sendTCP(const std::vector<char>& serializedMessage) {
     while (totalSent < serializedMessage.size()) {
         int sent = send(_tcpSocket, serializedMessage.data() + totalSent, serializedMessage.size() - totalSent, 0);
         if (sent == SOCKET_ERROR) {
-            std::cout << "send() failed with error code: " << getSocketError() << std::endl;
+            serverConsole() << "send() failed with error code: " << getSocketError() << std::endl;
             exit(EXIT_FAILURE);
         }
         totalSent += sent;

@@ -14,16 +14,21 @@
 #include "GameMessage.h"
 #include "util/json.hpp"
 
+class Serializer;
+inline Serializer& serializer();
+
 template <typename T>
 concept JSONable = requires(T object) {
     { nlohmann::json(object) };
     { nlohmann::json().get<T>() };
 };
 
-
 class Serializer {
 public:
     using SerializedBuffer = std::vector<char>;
+
+    Serializer(const Serializer&) = delete;
+    Serializer& operator=(const Serializer&) = delete;
 
     template<JSONable T>
     void serialize(const T& data, MessageType messageType) {
@@ -100,8 +105,20 @@ public:
     }
 
 private:
+    Serializer() = default;
+    friend inline Serializer& serializer();
+
+    static Serializer& getInstance() {
+        static Serializer instance;
+        return instance;
+    }
+
     std::vector<char> _buffer;
     size_t _offset = 0;
 };
+
+inline Serializer& serializer() {
+    return Serializer::getInstance();
+}
 
 #endif // SERIALIZER_H

@@ -7,13 +7,13 @@ Server::Server(int port) : _gameModel() {
 
     _udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (_udpSocket == INVALID_SOCKET) {
-        ServerConsole << "Could not create UDP socket: " << getSocketError() << endl;
+        serverConsole() << "Could not create UDP socket: " << getSocketError() << endl;
         exit(EXIT_FAILURE);
     }
 
     _tcpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (_tcpSocket == INVALID_SOCKET) {
-        ServerConsole << "Could not create TCP socket: " << getSocketError() << endl;
+        serverConsole() << "Could not create TCP socket: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         exit(EXIT_FAILURE);
     }
@@ -24,27 +24,27 @@ Server::Server(int port) : _gameModel() {
     _server.sin_port = htons(port);
 
     if (::bind(_udpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
-        ServerConsole << "Bind UDP failed with error code: " << getSocketError() << endl;
+        serverConsole() << "Bind UDP failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
     if (::bind(_tcpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
-        ServerConsole << "Bind TCP failed with error code: " << getSocketError() << endl;
+        serverConsole() << "Bind TCP failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
     if (::listen(_tcpSocket, SOMAXCONN) == SOCKET_ERROR) {
-        ServerConsole << "Listen failed with error code: " << getSocketError() << endl;
+        serverConsole() << "Listen failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
-    ServerConsole << "Server ready: listening on port " << port << " (TCP & UDP)" << endl;
+    serverConsole() << "Server ready: listening on port " << port << " (TCP & UDP)" << endl;
 }
 
 Server::~Server() {
@@ -104,7 +104,7 @@ void Server::runNetworkLoop() {
         int activity = select(maxSocket + 1, &readfds, nullptr, nullptr, &timeout);
 
         if (activity == SOCKET_ERROR) {
-            ServerConsole << "select() error: " << getSocketError() << endl;
+            serverConsole() << "select() error: " << getSocketError() << endl;
             if (!_serverToggle.load()) break;
             continue;
         }
@@ -145,7 +145,7 @@ void Server::runNetworkLoop() {
 
         processOutgoingMessages();
     }
-    ServerConsole << "[Server] Thread réseau arrêté." << endl;
+    serverConsole() << "[Server] Thread réseau arrêté." << endl;
 }
 bool Server::tcpPacketHandling(map<int, unique_ptr<ClientSession>>::iterator& clientIt) {
     auto& clientSession = clientIt->second;
@@ -184,11 +184,11 @@ bool Server::tcpPacketHandling(map<int, unique_ptr<ClientSession>>::iterator& cl
         int errCode = getSocketError();
 
         if (bytesReceived == 0) {
-            ServerConsole << "[TCP] Client ID " << clientId << " déconnecté gracieusement." << endl;
+            serverConsole() << "[TCP] Client ID " << clientId << " déconnecté gracieusement." << endl;
         } else if (errCode == SOCK_ERR_CONNRESET) {
-            ServerConsole << "[TCP] Client ID " << clientId << " déconnecté de force (Connexion réinitialisée)." << endl;
+            serverConsole() << "[TCP] Client ID " << clientId << " déconnecté de force (Connexion réinitialisée)." << endl;
         } else {
-            ServerConsole << "[TCP] Erreur FATALE sur socket " << clientSock << " (Client ID " << clientId << "): " << errCode << endl;
+            serverConsole() << "[TCP] Erreur FATALE sur socket " << clientSock << " (Client ID " << clientId << "): " << errCode << endl;
         }
 
         if (errCode != SOCK_ERR_WOULDBLOCK) {
@@ -211,7 +211,7 @@ void Server::udpPacketHandling(sockaddr_in& clientAddr) {
     if (bytesReceived > 0) {
         _buffer[bytesReceived] = '\0';
     } else if (bytesReceived < 0) {
-        ServerConsole << "[UDP] Erreur recvfrom(): " << getSocketError() << endl;
+        serverConsole() << "[UDP] Erreur recvfrom(): " << getSocketError() << endl;
     }
 }
 
@@ -223,16 +223,16 @@ bool Server::tcpAcceptanceHandling(sockaddr_in& clientAddr) {
         if (errCode == SOCK_ERR_WOULDBLOCK) {
             return false;
         }
-        ServerConsole << "accept() failed: " << errCode << endl;
+        serverConsole() << "accept() failed: " << errCode << endl;
         return false;
     }
 
     char ipBuffer[INET_ADDRSTRLEN];
     if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-        ServerConsole << "[TCP] Nouvelle connexion acceptée depuis "
+        serverConsole() << "[TCP] Nouvelle connexion acceptée depuis "
                                      << ipBuffer << ":" << ntohs(clientAddr.sin_port) << endl;
     } else {
-        ServerConsole << "[TCP] Nouvelle connexion acceptée avec une erreur de conversion IP : "
+        serverConsole() << "[TCP] Nouvelle connexion acceptée avec une erreur de conversion IP : "
                                      << "Code d'erreur (errno) : " << getSocketError()
                                      << ". Vérifiez la famille d'adresses ou la taille du buffer." << endl;
     }
@@ -274,7 +274,7 @@ void Server::processOutgoingMessages() {
 void Server::sendToTcpClient(int clientId, const vector<char>& buffer) {
     auto it = _connectedTcpClients.find(clientId);
     if (it == _connectedTcpClients.end()) {
-        ServerConsole << "[Server] Erreur: Client TCP avec ID " << clientId
+        serverConsole() << "[Server] Erreur: Client TCP avec ID " << clientId
                       << " non trouvé ou déjà déconnecté." << endl;
         return;
     }
@@ -294,18 +294,18 @@ void Server::sendToTcpClient(int clientId, const vector<char>& buffer) {
                 continue;
             }
 
-            ServerConsole << "[TCP] Erreur lors de l'envoi au client " << clientId
+            serverConsole() << "[TCP] Erreur lors de l'envoi au client " << clientId
                           << ". Code d'erreur : " << errCode << endl;
             return;
         }
 
         if (bytesSent == 0) {
-            ServerConsole << "[TCP] send() pour client " << clientId << " a envoyé 0 octets. Socket fermée ?" << endl;
+            serverConsole() << "[TCP] send() pour client " << clientId << " a envoyé 0 octets. Socket fermée ?" << endl;
             return;
         }
 
         totalBytesSent += bytesSent;
     }
 
-    ServerConsole << "[TCP] Message envoyé à client " << clientId << " (" << totalBytesSent << " octets)." << endl;
+    serverConsole() << "[TCP] Message envoyé à client " << clientId << " (" << totalBytesSent << " octets)." << endl;
 }

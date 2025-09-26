@@ -13,6 +13,7 @@
 #else
     #error "Unsupported operating system"
 #endif
+#include "ServerConsole.h"
 
 #ifdef ARPG_OS_WINDOWS
 #include <winsock2.h>
@@ -26,12 +27,12 @@
 
 inline void socketInitialisation() {
     WSADATA wsa;
-    std::cout << "Initialising Winsock..." << std::endl;
+    serverConsole() << "Initialising Winsock..." << std::endl;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         std::cerr << "Failed. Error Code: " << WSAGetLastError() << std::endl;
         exit(EXIT_FAILURE);
     }
-    std::cout << "Initialised." << std::endl;
+    serverConsole() << "Initialised." << std::endl;
 }
 
 inline int getSocketError() {

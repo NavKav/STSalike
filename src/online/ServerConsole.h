@@ -10,12 +10,13 @@
 #include <mutex>
 #include <sstream>
 
+class ServerConsole;
+inline ServerConsole& serverConsole();
+
 class ServerConsole {
 public:
-    static ServerConsole& getInstance() {
-        static ServerConsole instance;
-        return instance;
-    }
+    ServerConsole(const ServerConsole&) = delete;
+    ServerConsole& operator=(const ServerConsole&) = delete;
 
     template<typename T>
     ServerConsole& operator<<(const T& data) {
@@ -39,7 +40,6 @@ public:
     template<typename T, typename... Args>
     void writeLine(T&& first, Args&&... rest) {
         *this << std::forward<T>(first);
-
         writeLineRecursive(std::forward<Args>(rest)...);
     }
 
@@ -50,8 +50,13 @@ public:
 private:
     ServerConsole() = default;
     ~ServerConsole() = default;
-    ServerConsole(const ServerConsole&) = delete;
-    ServerConsole& operator=(const ServerConsole&) = delete;
+
+    friend inline ServerConsole& serverConsole();
+
+    static ServerConsole& getInstance() {
+        static ServerConsole instance;
+        return instance;
+    }
 
     std::ostringstream m_oss;
     std::mutex m_mutex;
@@ -63,6 +68,8 @@ private:
     }
 };
 
-inline ServerConsole& ServerConsole = ServerConsole::getInstance();
+inline ServerConsole& serverConsole() {
+    return ServerConsole::getInstance();
+}
 
 #endif //SERVERCONSOLE_H

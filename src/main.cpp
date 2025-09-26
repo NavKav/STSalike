@@ -5,12 +5,11 @@
 #include "core/Window.h"
 #include "core/User.h"
 #include "game/context/GameWindowContent.h"
+#include "util/OSCommandDependencies.h"
 
 #undef main
 
 using namespace std;
-
-
 
 // int main( int argc, char *argv[] )
 // {
@@ -36,9 +35,8 @@ using namespace std;
 //     return EXIT_SUCCESS;
 // }
 
-int main(int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
-
 //
 //------------------------------------------------------------------------------------------------------
 //                            MODE SERVEUR AUTONOME (multijoueur)
@@ -46,11 +44,12 @@ int main(int argc, char *argv[] )
 //
 
     if (argc == 2 && !strcmp(argv[1], "_server")) {
-        window.close();
-        user.close();
+        window().close();
+        user().close();
 
         Server server(1998);
         server.start();
+
     }
 //
 //------------------------------------------------------------------------------------------------------
@@ -64,8 +63,8 @@ int main(int argc, char *argv[] )
             server.start();
         });
 
-        user.setWindowContent(new GameWindowContent());
-        user.start();
+        user().setWindowContent(new GameWindowContent());
+        user().start();
 
         server.stop();
         serverThread.join();
@@ -77,8 +76,8 @@ int main(int argc, char *argv[] )
 //
 
     else {
-        user.setWindowContent(new GameWindowContent());
-        user.start();
+        user().setWindowContent(new GameWindowContent());
+        user().start();
     }
     return EXIT_SUCCESS;
 }

@@ -21,8 +21,8 @@ void GameView::process() {
     /************************** INITIALIZATION  ******************************/
     /*************************************************************************/
 
-    window.changeDrawColor(255, 0, 0, ALPHA_OPAQUE);
-    window.clearBackground();
+    window().changeDrawColor(255, 0, 0, ALPHA_OPAQUE);
+    window().clearBackground();
 
     /*************************************************************************/
     /************************** UNITS TESTS  *********************************/
@@ -37,12 +37,12 @@ void GameView::process() {
     _mapView.displayMap();
 
     _frameRate.display();
-    window.refresh();
+    window().refresh();
 
-    /*if (user[SDL_SCANCODE_SPACE].pressed) {
+    /*if (user()[SDL_SCANCODE_SPACE].pressed) {
         _client.sendTCP("a appuye sur espace");
     }
-    if (user[SDL_SCANCODE_Q].pressed) {
+    if (user()[SDL_SCANCODE_Q].pressed) {
         _client.sendUDP("hello world");
     }*/
 
@@ -63,7 +63,7 @@ void GameView::processGameMessage() {
                 processMessageNODEUPDATE(gameMessage);
                 break;
         default:
-            cout << "Message de type inconnu reçu." << endl;
+            serverConsole() << "Message de type inconnu reçu." << endl;
             break;
         }
     }
@@ -71,7 +71,7 @@ void GameView::processGameMessage() {
 
 void GameView::processMessageNODEUPDATE(unique_ptr<GameMessage>& gameMessage) {
     Node updatedNode;
-    GlobalSerializer.deserialize<Node>(updatedNode, gameMessage->payload);
+    serializer().deserialize<Node>(updatedNode, gameMessage->payload);
 
     _mapView.addNode(updatedNode.x, updatedNode.y, updatedNode);
 }

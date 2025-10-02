@@ -7,6 +7,8 @@
 
 #include <unordered_map>
 #include <memory>
+#include <core/Window.h>
+#include <bitset>
 #include "MapModel.h"
 
 

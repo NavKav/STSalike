@@ -4,8 +4,6 @@
 
 #include "MapView.h"
 
-#include <core/Window.h>
-
 using namespace std;
 
 void MapView::addNode(int x, int y, Node node) {
@@ -21,7 +19,7 @@ Node* MapView::getNode(int x, int y) {
 }
 
 void MapView::displayMap() {
-    int radius = 10;
+    int radius = 70;
     Coords origin = {0, 0};
     for (int x = -radius; x <= radius; x++) {
         for (int y = -radius; y <= radius; y++) {
@@ -31,9 +29,20 @@ void MapView::displayMap() {
 
             if (distance_squared <= radius * radius) {
                 auto it = _knownNodes.find(currentCoords);
-                if (it != nullptr) {
+                if (it != nullptr && it->second->edges) {
                     Node foundNode = *(it->second);
-                    window().writeText(X/2 + 25 * foundNode.x, Y/2 + 25 * foundNode.y, "N");
+                    window().writeText(X/2 + 50 * foundNode.x - 7, Y/2 + 50 * foundNode.y - 7, "N");
+                    window().changeDrawColor(0,0,0,255);
+                    bitset<8> bits((uint8_t)foundNode.edges);
+                    for (int i = 0; i < bits.size(); ++i) {
+                        if (bits.test(i)) {
+                            window().drawLine(X/2 + 50 * foundNode.x
+                                              , Y/2 + 50 * foundNode.y
+                                              , X/2 + 50 * (foundNode.x + MapModel::_neighborOffsets[i].x)
+                                              , Y/2 + 50 * (foundNode.y + MapModel::_neighborOffsets[i].y)
+                                              );
+                        }
+                    }
                 }
             }
         }

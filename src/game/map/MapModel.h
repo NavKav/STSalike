@@ -41,9 +41,12 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Node, x, y, height, edges)
 
 class MapModel {
 public :
+    static const Coords _neighborOffsets[8];
+
     MapModel(unsigned int seed);
     Node getNode(int x, int y);
     std::vector<Node> getAdjacentNodes(int x, int y);
+    std::vector<Node> getInSightNodes(int x, int y);
 
 private :
     PerlinNoise _perlinNoiseNode;
@@ -56,12 +59,11 @@ private :
 
     std::random_device _rd;
 
-    double _heightThreshold = 0.1;
+    double _heightThreshold = 0.025;
     double _connectionProbability = 0.5;
 
     std::unordered_map<Coords, Node, CoordsHash> _nodeCache;
     std::mutex _cacheMutex;
-    static const Coords _neighborOffsets[8];
 
     double computeNodeHeight(int x, int y);
 };

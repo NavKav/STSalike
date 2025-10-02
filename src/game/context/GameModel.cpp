@@ -105,7 +105,7 @@ Task GameModel::createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> mes
         Node initialNode = _mapModel.getNode(0, 0);
         serializer().serialize(initialNode, MessageType::NODE_UPDATE);
 
-        auto adjacentNodeList = _mapModel.getAdjacentNodes(0, 0);
+        auto adjacentNodeList = _mapModel.getInSightNodes(0, 0);
         for (const auto& n : adjacentNodeList) {
             serializer().serialize(n, MessageType::NODE_UPDATE);
         }

@@ -8,7 +8,8 @@
 using namespace std;
 
 Window& Window::getInstance() {
-    static Window instance("STS Alike", 500, 500);
+    // (32 x 40) x (32 x 24)
+    static Window instance("STS Alike", 1000, 800);
     return instance;
 }
 

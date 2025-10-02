@@ -58,6 +58,7 @@ double MapModel::computeNodeHeight(int x, int y) {
     return noiseHeight / maxAmplitude;
 }
 
+// TO DO : optimiser ligne 83 en ajoutant à _nodeCache
 Node MapModel::getNode(int x, int y) {
     Coords coords = {x, y};
 
@@ -98,6 +99,18 @@ vector<Node> MapModel::getAdjacentNodes(int x, int y) {
 
     for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
+            if (i == 0 && j == 0) continue;
+            adjacentPoints.push_back(getNode(x + i, y + j));
+        }
+    }
+    return adjacentPoints;
+}
+
+vector<Node> MapModel::getInSightNodes(int x, int y) {
+    vector<Node> adjacentPoints;
+
+    for (int i = -10; i <= 10; i++) {
+        for (int j = -10; j <= 10; j++) {
             if (i == 0 && j == 0) continue;
             adjacentPoints.push_back(getNode(x + i, y + j));
         }

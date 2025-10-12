@@ -15,7 +15,7 @@
 #include "util/ThreadPool.h"
 #include "online/GameMessage.h"
 #include "game/map/MapModel.h"
-#include "game/Player/Player.h"
+#include "game/Player/PlayerModel.h"
 #include "online/Serializer.h"
 
 class GameModel {
@@ -39,7 +39,7 @@ private:
     std::queue<std::pair<int, std::vector<char>>> _outgoingMessages;
     std::mutex _outgoingMutex;
 
-    std::unordered_map<int, std::unique_ptr<Player>> _players;
+    std::unordered_map<int, std::unique_ptr<PlayerModel>> _players;
     std::shared_mutex _playersMutex;
 
     MapModel _mapModel;

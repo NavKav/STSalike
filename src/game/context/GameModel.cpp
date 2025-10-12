@@ -92,7 +92,7 @@ Task GameModel::createTaskFromMessageCONNECTION(std::unique_ptr<GameMessage> mes
         {
             std::unique_lock<std::shared_mutex> lock(_playersMutex);
             if (_players.find(clientId) == _players.end()) {
-                _players.emplace(clientId, std::make_unique<Player>(clientId, 0, 0));
+                _players.emplace(clientId, std::make_unique<PlayerModel>(clientId, 0, 0));
                 serverConsole() << "Player " << clientId << " spawned." << std::endl;
             } else {
                 serverConsole() << "Player " << clientId << " already exists." << std::endl;

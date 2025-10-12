@@ -49,11 +49,13 @@ add_executable(STSalike ${SOURCES}
         src/online/ServerConsole.h
         src/util/ThreadPool.h
         src/online/GameMessage.h
-        src/game/Player/Player.cpp
-        src/game/Player/Player.h
         src/online/Serializer.h
         src/game/map/MapView.cpp
         src/game/map/MapView.h
+        src/game/Player/PlayerModel.cpp
+        src/game/Player/PlayerModel.h
+        src/game/Player/PlayerView.cpp
+        src/game/Player/PlayerView.h
 )
 
 set_property(TARGET STSalike PROPERTY WIN32_EXECUTABLE OFF)

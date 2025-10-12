@@ -81,9 +81,10 @@ void MapView::displayMap() {
                 for (int i = 0; i < (int)bits.size(); ++i) {
                     if (!bits.test(i)) continue;
 
-                    int nx = halfX + (tile * foundNode.x + MapModel::_neighborOffsets[i].x - camX);
-                    int ny = halfY + (tile * foundNode.y + MapModel::_neighborOffsets[i].y - camY);
+                    int nx = halfX + (tile * (foundNode.x + MapModel::_neighborOffsets[i].x) - camX);
+                    int ny = halfY + (tile * (foundNode.y + MapModel::_neighborOffsets[i].y) - camY);
 
+                    window().changeDrawColor(0, 0, 126, ALPHA_OPAQUE);
                     window().drawLine(cx, cy, nx, ny);
                 }
             }

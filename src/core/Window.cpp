@@ -9,7 +9,7 @@ using namespace std;
 
 Window& Window::getInstance() {
     // (32 x 40) x (32 x 24)
-    static Window instance("STS Alike", 1000, 800);
+    static Window instance("STS Alike", 2000, 1200);
     return instance;
 }
 

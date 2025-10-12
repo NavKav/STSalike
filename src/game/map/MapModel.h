@@ -59,8 +59,8 @@ private :
 
     std::random_device _rd;
 
-    double _heightThreshold = 0.025;
-    double _connectionProbability = 0.5;
+    double _heightThreshold = 0.020;
+    double _connectionProbability = 0.7;
 
     std::unordered_map<Coords, Node, CoordsHash> _nodeCache;
     std::mutex _cacheMutex;

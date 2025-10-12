@@ -109,8 +109,8 @@ vector<Node> MapModel::getAdjacentNodes(int x, int y) {
 vector<Node> MapModel::getInSightNodes(int x, int y) {
     vector<Node> adjacentPoints;
 
-    for (int i = -10; i <= 10; i++) {
-        for (int j = -10; j <= 10; j++) {
+    for (int i = -30; i <= 30; i++) {
+        for (int j = -30; j <= 30; j++) {
             if (i == 0 && j == 0) continue;
             adjacentPoints.push_back(getNode(x + i, y + j));
         }

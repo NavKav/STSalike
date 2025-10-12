@@ -3,7 +3,15 @@
 //
 #include "Window.h"
 
+#include "online/ServerConsole.h"
+
 using namespace std;
+
+Window& Window::getInstance() {
+    // (32 x 40) x (32 x 24)
+    static Window instance("STS Alike", 1000, 800);
+    return instance;
+}
 
 Window::Window(const string &windowName, unsigned int sizeX, unsigned int sizeY) :
 _X(sizeX),
@@ -16,7 +24,7 @@ _Y(sizeY)
                                      SDL_WINDOWPOS_UNDEFINED,
                                      (int) sizeX, (int) sizeY,  0);
     if (_actualWindow == nullptr) {
-        std::cout << "Window::Window() :" << SDL_GetError()
+        serverConsole() << "Window::Window() :" << SDL_GetError()
                   << std::endl;
     }
     _renderer = SDL_CreateRenderer(_actualWindow, -1, SDL_RENDERER_ACCELERATED
@@ -78,7 +86,7 @@ void Window::scaleIMG(int x, int y, int width, int height, const string &name) {
     SDL_Texture * texture = IMG_LoadTexture(_renderer, ("ressource/" + name).c_str());
 
     if (texture == NULL) {
-        cout << "Window::drawTexture() : " << SDL_GetError() << endl;
+        serverConsole() << "Window::drawTexture() : " << SDL_GetError() << endl;
     }
 
     SDL_Rect p;
@@ -107,7 +115,7 @@ void Window::clear() {
     SDL_Texture * texture = IMG_LoadTexture(_renderer, "ressource/image/clear.bmp");
 
     if (texture == NULL) {
-        cout << "Window::drawTexture() : " << SDL_GetError() << endl;
+        serverConsole() << "Window::drawTexture() : " << SDL_GetError() << endl;
     }
 
     SDL_RenderCopy(_renderer, texture, NULL, NULL);
@@ -127,7 +135,7 @@ void Window::open(string file) {
     if (texture != NULL) {
         _hashmap.insert({file, texture});
     } else {
-        cout << "Window::open() : " << SDL_GetError() << endl;
+        serverConsole() << "Window::open() : " << SDL_GetError() << endl;
     }
 }
 
@@ -135,7 +143,7 @@ void Window::drawIMG(const string &name, int x, int y) {
     SDL_Texture* texture = _hashmap.at(name);
 
     if (texture == NULL) {
-        cout << "Window::drawIMG() : " << SDL_GetError() << endl;
+        serverConsole() << "Window::drawIMG() : " << SDL_GetError() << endl;
     }
 
     SDL_Rect p;
@@ -150,7 +158,7 @@ void Window::drawPartIMG(const string &name, int x, int y, unsigned int a, unsig
     SDL_Texture* texture = _hashmap.at(name);
 
     if (texture == NULL) {
-        cout << "Window::drawIMG() : " << SDL_GetError() << endl;
+        serverConsole() << "Window::drawIMG() : " << SDL_GetError() << endl;
     }
 
     SDL_Rect p;
@@ -202,7 +210,7 @@ unsigned int Window::getY() const {
 }
 
 void Window::debug() {
-    cout << _hashmap.size() << endl;
+    serverConsole() << _hashmap.size() << endl;
 }
 
 void Window::drawOn(unsigned int layer) {

@@ -6,21 +6,18 @@
 #define ARPG_STORYBOARD_FRAMERATE_H
 
 #include <sys/time.h>
-#include <iostream>
 #include "core/Window.h"
 
 #define GAP 5
 
-
 class FrameRate {
 public :
     FrameRate();
-    void display(Window& window);
+    void display();
 private :
-    time_t _currentTime = time(NULL);
+    time_t _lastTime;
     struct timeval _tp;
     int _previousValue = 0;
 };
-
 
 #endif //ARPG_STORYBOARD_FRAMERATE_H

@@ -11,7 +11,9 @@
 
 #include <ctime>
 #include "WindowContent.h"
-#include "Window.h"
+
+class User;
+User& user();
 
 #define NUM_SDLK 1000 // maximum range of SDL key number
 #define SDL_SCANCODE_RIGHTCLICK NUM_SDLK - 1
@@ -25,7 +27,10 @@ struct Input {
 
 class User {
 public :
-    User(Window& window, WindowContent* windowContent);
+    User(const User&) = delete;
+    User& operator=(const User&) = delete;
+
+    // Méthodes publiques de la classe
     void start();
     void stop();
     ~User();
@@ -34,17 +39,18 @@ public :
     void setWindowContent(WindowContent *windowContent);
     void waitAnyKey();
     void waitAnyKeyThenClose();
-	void close();
+    void close();
 
 private :
     bool _boolLoop = true;
     Input _inputArr[NUM_SDLK] = {{false, 0, 0}};
     bool takeInput(const SDL_Event& event);
     unsigned int _numberKeyDown = 0;
-    WindowContent* _windowContent;
-    Window& _window;
-};
+    WindowContent* _windowContent{};
 
-inline User user(window, nullptr);
+    friend User& user();
+    User();
+    static User& getInstance();
+};
 
 #endif //PROJECTTT_PLAYER_H

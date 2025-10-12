@@ -1,27 +1,19 @@
-//
-// Created by NavKav on 18/03/2024.
-//
-
-#include <vector>
 #include "Server.h"
 
 using namespace std;
 
-Server::Server(int port) {
-    // Initialise Winsock
+Server::Server(int port) : _gameModel() {
     socketInitialisation();
 
-    // --- UDP ---
     _udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (_udpSocket == INVALID_SOCKET) {
-        std::cout << "Could not create UDP socket: " << getSocketError() << std::endl;
+        serverConsole() << "Could not create UDP socket: " << getSocketError() << endl;
         exit(EXIT_FAILURE);
     }
 
-    // --- TCP ---
     _tcpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (_tcpSocket == INVALID_SOCKET) {
-        std::cout << "Could not create TCP socket: " << getSocketError() << std::endl;
+        serverConsole() << "Could not create TCP socket: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         exit(EXIT_FAILURE);
     }
@@ -31,169 +23,195 @@ Server::Server(int port) {
     _server.sin_addr.s_addr = INADDR_ANY;
     _server.sin_port = htons(port);
 
-    // --- Bind UDP ---
     if (::bind(_udpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
-        std::cout << "Bind UDP failed with error code: " << getSocketError() << std::endl;
+        serverConsole() << "Bind UDP failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
-    // --- Bind TCP ---
     if (::bind(_tcpSocket, (sockaddr*)&_server, sizeof(_server)) == SOCKET_ERROR) {
-        std::cout << "Bind TCP failed with error code: " << getSocketError() << std::endl;
+        serverConsole() << "Bind TCP failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
     if (::listen(_tcpSocket, SOMAXCONN) == SOCKET_ERROR) {
-        std::cout << "Listen failed with error code: " << getSocketError() << std::endl;
+        serverConsole() << "Listen failed with error code: " << getSocketError() << endl;
         disconnectSocket(_udpSocket);
         disconnectSocket(_tcpSocket);
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Server ready: listening on port " << port << " (TCP & UDP)" << std::endl;
+    serverConsole() << "Server ready: listening on port " << port << " (TCP & UDP)" << endl;
 }
 
 Server::~Server() {
+    _serverToggle.store(false);
+    _gameModel.stop();
+
+    if (_gameModelThread.joinable()) {
+        _gameModelThread.join();
+    }
+
     disconnectSocket(_tcpSocket);
     disconnectSocket(_udpSocket);
     cleanupSocket();
 }
 
 void Server::start() {
+    _gameModelThread = thread(&GameModel::run, &_gameModel);
+
+    runNetworkLoop();
+}
+
+void Server::stop() {
+    _serverToggle.store(false);
+}
+
+void Server::runNetworkLoop() {
     fd_set readfds;
     sockaddr_in clientAddr{};
+    timeval timeout{};
 
-    std::cout << "Serveur en attente de messages..." << std::endl;
-
-    while (_serverToggle) {
+    while (_serverToggle.load()) {
         _addrLen = sizeof(clientAddr);
         memset(&clientAddr, 0, _addrLen);
         _clientsToProcess.clear();
 
         /*************************************************************************/
-        /*************************  MULTIPLEXING  ********************************/
+        /************************* MULTIPLEXING  *********************************/
         /*************************************************************************/
 
         FD_ZERO(&readfds);
         FD_SET(_udpSocket, &readfds);
         FD_SET(_tcpSocket, &readfds);
 
-        SOCKET maxSocket = std::max(_udpSocket, _tcpSocket);
+        SOCKET maxSocket = max(_udpSocket, _tcpSocket);
 
-        for (auto const& pair : _connectedTcpClients) {
-            SOCKET clientSock = pair.first;
+        for (const auto& clientPtr : _connectedTcpClients) {
+            SOCKET clientSock = clientPtr.second->_tcpSocket;
             FD_SET(clientSock, &readfds);
             if (clientSock > maxSocket) {
                 maxSocket = clientSock;
             }
         }
 
-        int activity = select(maxSocket + 1, &readfds, nullptr, nullptr, nullptr);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 100000;
+
+        int activity = select(maxSocket + 1, &readfds, nullptr, nullptr, &timeout);
 
         if (activity == SOCKET_ERROR) {
-            std::cerr << "select() error: " << getSocketError() << std::endl;
+            serverConsole() << "select() error: " << getSocketError() << endl;
+            if (!_serverToggle.load()) break;
             continue;
         }
 
+        /************************************************************************/
+        /************************* TCP ACCEPTANCE  ******************************/
+        /************************************************************************/
 
-        /*************************************************************************/
-        /*************************  UDP HANDLING  ********************************/
-        /*************************************************************************/
+        if (FD_ISSET(_tcpSocket, &readfds)) {
+            if(tcpAcceptanceHandling(clientAddr)) {
+                continue;
+            }
+        }
+
+        /************************************************************************/
+        /************************* UDP HANDLING  ********************************/
+        /************************************************************************/
 
         if (FD_ISSET(_udpSocket, &readfds)) {
             memset(_buffer, 0, sizeof(_buffer));
             udpPacketHandling(clientAddr);
         }
 
-        /*************************************************************************/
-        /*************************  TCP ACCEPTANCE  ******************************/
-        /*************************************************************************/
+        /************************************************************************/
+        /************************* TCP HANDLING  ********************************/
+        /************************************************************************/
 
-        if (FD_ISSET(_tcpSocket, &readfds)) {
-            if(tcpAcceptanceHandling(clientAddr))
-                continue;
-        }
-
-        /*************************************************************************/
-        /*************************  TCP HANDLING  ********************************/
-        /*************************************************************************/
-
-        for (auto const& pair : _connectedTcpClients) {
-            _clientsToProcess.push_back(pair.first);
-        }
-
-        for (SOCKET clientSock : _clientsToProcess) {
+        auto it = _connectedTcpClients.begin();
+        while (it != _connectedTcpClients.end()) {
+            SOCKET clientSock = it->second->_tcpSocket;
             if (FD_ISSET(clientSock, &readfds)) {
-                memset(_buffer, 0, sizeof(_buffer));
-                int bytesReceived = recv(clientSock, _buffer, BUFFER_SIZE - 1, 0);
-                tcpPacketHandling(clientSock, bytesReceived);
+                if (tcpPacketHandling(it)) {
+                    continue;
+                }
+            }
+            ++it;
+        }
+
+        processOutgoingMessages();
+    }
+    serverConsole() << "[Server] Thread réseau arrêté." << endl;
+}
+bool Server::tcpPacketHandling(map<int, unique_ptr<ClientSession>>::iterator& clientIt) {
+    auto& clientSession = clientIt->second;
+    SOCKET clientSock = clientSession->_tcpSocket;
+
+    vector<char> tempBuffer(BUFFER_SIZE);
+    int bytesReceived = recv(clientSock, tempBuffer.data(), tempBuffer.size(), 0);
+
+    if (bytesReceived > 0) {
+        auto& clientBuffer = clientSession->_incomingBuffer;
+        clientBuffer.insert(clientBuffer.end(), tempBuffer.begin(), tempBuffer.begin() + bytesReceived);
+
+        while (clientBuffer.size() >= sizeof(MessageHeader)) {
+            MessageHeader header;
+            memcpy(&header, clientBuffer.data(), sizeof(MessageHeader));
+
+            if (clientBuffer.size() >= sizeof(MessageHeader) + header.size) {
+                vector<char> payload(
+                        clientBuffer.begin() + sizeof(MessageHeader),
+                        clientBuffer.begin() + sizeof(MessageHeader) + header.size
+                );
+
+                _gameModel.addIncomingMessage(make_unique<GameMessage>(
+                        header.type,
+                        clientSession->_id,
+                        std::move(payload)
+                ));
+
+                clientBuffer.erase(clientBuffer.begin(), clientBuffer.begin() + sizeof(MessageHeader) + header.size);
+            } else {
+                break;
             }
         }
+    } else { // DECONNEXION
+        int clientId = clientSession->_id;
+        int errCode = getSocketError();
+
+        if (bytesReceived == 0) {
+            serverConsole() << "[TCP] Client ID " << clientId << " déconnecté gracieusement." << endl;
+        } else if (errCode == SOCK_ERR_CONNRESET) {
+            serverConsole() << "[TCP] Client ID " << clientId << " déconnecté de force (Connexion réinitialisée)." << endl;
+        } else {
+            serverConsole() << "[TCP] Erreur FATALE sur socket " << clientSock << " (Client ID " << clientId << "): " << errCode << endl;
+        }
+
+        if (errCode != SOCK_ERR_WOULDBLOCK) {
+            _gameModel.addIncomingMessage(make_unique<GameMessage>(MessageType::DISCONNECTION, clientId, vector<char>{}));
+            disconnectSocket(clientSock);
+            clientIt = _connectedTcpClients.erase(clientIt);
+            _connectedTotal--;
+            if (_connectedTotal == 0) {
+                _serverToggle.store(false);
+            }
+            return true;
+        }
     }
+    return false;
 }
 
 void Server::udpPacketHandling(sockaddr_in& clientAddr) {
-    int bytesReceived = recvfrom(_udpSocket, _buffer, BUFFER_SIZE - 1, 0,(sockaddr*)&clientAddr, &_addrLen);
+    int bytesReceived = recvfrom(_udpSocket, _buffer, BUFFER_SIZE - 1, 0, (sockaddr*)&clientAddr, &_addrLen);
 
     if (bytesReceived > 0) {
         _buffer[bytesReceived] = '\0';
-        char ipBuffer[INET_ADDRSTRLEN];
-        if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-            std::cout << "[UDP] Message de " << ipBuffer << ":" << ntohs(clientAddr.sin_port) << " : " << _buffer << std::endl;
-        } else {
-            std::cerr << "[UDP] Message reçu d'une adresse inconnue (conversion IP échouée)." << std::endl;
-        }
-    } else if (bytesReceived == 0) {
-        char ipBuffer[INET_ADDRSTRLEN];
-        if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-            std::cout << "[UDP] Erreur ou message vide reçu. (" << ipBuffer << ":" << ntohs(clientAddr.sin_port) << ")" << std::endl;
-        } else {
-            std::cerr << "[UDP] Erreur ou message vide reçu (adresse IP non convertie)." << std::endl;
-        }
-    } else {
-        char ipBuffer[INET_ADDRSTRLEN];
-        std::cerr << "[UDP] recvfrom() error: " << getSocketError();
-        if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-            std::cerr << " (" << ipBuffer << ":" << ntohs(clientAddr.sin_port) << ")" << std::endl;
-        } else {
-            std::cerr << " (adresse inconnue)" << std::endl;
-        }
-    }
-}
-
-void Server::tcpPacketHandling(SOCKET clientSock, int bytesReceived) {
-    if (bytesReceived > 0) {
-        _buffer[bytesReceived] = '\0';
-        if (_connectedTcpClients.count(clientSock)) {
-            char ipBuffer[INET_ADDRSTRLEN];
-            if (inet_ntop(AF_INET, &(_connectedTcpClients[clientSock]->_tcpAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-                std::cout << "[TCP] Message de " << _connectedTcpClients[clientSock]->_id
-                          << " (" << ipBuffer << ":"
-                          << ntohs(_connectedTcpClients[clientSock]->_tcpAddr.sin_port) << ") : "
-                          << _buffer << std::endl;
-            } else {
-                std::cerr << "[TCP] Message de " << _connectedTcpClients[clientSock]->_id
-                          << " (adresse IP non convertie) : " << _buffer << std::endl;
-            }
-        }
-    } else if (bytesReceived == 0) {
-        std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_id << " déconnecté." << std::endl;
-        disconnectSocket(clientSock);
-        _connectedTcpClients.erase(clientSock);
-    } else {
-        int errCode = getSocketError();
-        if (errCode == 0) {
-            std::cout << "[TCP] Client " << _connectedTcpClients[clientSock]->_id << " déconnecté de force (reset)." << std::endl;
-        } else {
-            std::cerr << "[TCP] recv() error on socket " << clientSock << ": " << errCode << std::endl;
-        }
-        disconnectSocket(clientSock);
-        _connectedTcpClients.erase(clientSock);
-        if (_connectedTcpClients.empty()) _serverToggle = false;
+    } else if (bytesReceived < 0) {
+        serverConsole() << "[UDP] Erreur recvfrom(): " << getSocketError() << endl;
     }
 }
 
@@ -201,23 +219,93 @@ bool Server::tcpAcceptanceHandling(sockaddr_in& clientAddr) {
     SOCKET newClientSocket = ::accept(_tcpSocket, (sockaddr*)&clientAddr, &_addrLen);
 
     if (newClientSocket == INVALID_SOCKET) {
-        std::cerr << "accept() failed: " << getSocketError() << std::endl;
+        int errCode = getSocketError();
+        if (errCode == SOCK_ERR_WOULDBLOCK) {
+            return false;
+        }
+        serverConsole() << "accept() failed: " << errCode << endl;
         return false;
     }
 
     char ipBuffer[INET_ADDRSTRLEN];
     if (inet_ntop(AF_INET, &(clientAddr.sin_addr), ipBuffer, sizeof(ipBuffer)) != nullptr) {
-        std::cout << "[TCP] Nouvelle connexion acceptée depuis "
-                  << ipBuffer << ":" << ntohs(clientAddr.sin_port) << std::endl;
+        serverConsole() << "[TCP] Nouvelle connexion acceptée depuis "
+                                     << ipBuffer << ":" << ntohs(clientAddr.sin_port) << endl;
     } else {
-        std::cerr << "[TCP] Nouvelle connexion acceptée depuis une adresse inconnue." << std::endl;
+        serverConsole() << "[TCP] Nouvelle connexion acceptée avec une erreur de conversion IP : "
+                                     << "Code d'erreur (errno) : " << getSocketError()
+                                     << ". Vérifiez la famille d'adresses ou la taille du buffer." << endl;
     }
 
-    _connectedTcpClients[newClientSocket] = std::make_unique<ClientSocket>(
-            newClientSocket, clientAddr, _idCount
-    );
-    _idCount ++;
+    _connectedTcpClients.emplace(_idCount,
+                                 make_unique<ClientSession>(
+                                         newClientSocket, clientAddr, _idCount
+                                 ));
 
-    _connectedTcpClients[newClientSocket]->displayClientInfo();
+    vector<char> v;
+
+    _gameModel.addIncomingMessage(make_unique<GameMessage>(MessageType::CONNECTION, _idCount, std::move(v)));
+
+    _connectedTcpClients.at(_idCount)->displayClientInfo();
+
+    _idCount ++;
+    _connectedTotal ++;
+
     return true;
+}
+
+void Server::processOutgoingMessages() {
+    queue<pair<int, vector<char>>> messagesToSend;
+    _gameModel.getAndClearOutgoingMessages(messagesToSend);
+
+    while (!messagesToSend.empty()) {
+        auto message = messagesToSend.front();
+        messagesToSend.pop();
+        switch(message.first) {
+            case -1:
+                break;
+            default :
+                sendToTcpClient(message.first, message.second);
+                break;
+        }
+    }
+}
+
+void Server::sendToTcpClient(int clientId, const vector<char>& buffer) {
+    auto it = _connectedTcpClients.find(clientId);
+    if (it == _connectedTcpClients.end()) {
+        serverConsole() << "[Server] Erreur: Client TCP avec ID " << clientId
+                      << " non trouvé ou déjà déconnecté." << endl;
+        return;
+    }
+
+    SOCKET targetSocket = it->second->_tcpSocket;
+    const char* data = buffer.data();
+    int dataSize = static_cast<int>(buffer.size());
+    int totalBytesSent = 0;
+
+    while (totalBytesSent < dataSize) {
+        int bytesSent = ::send(targetSocket, data + totalBytesSent, dataSize - totalBytesSent, 0);
+
+        if (bytesSent == SOCKET_ERROR) {
+            int errCode = getSocketError();
+            if (errCode == SOCK_ERR_WOULDBLOCK) {
+                this_thread::sleep_for(chrono::milliseconds(1));
+                continue;
+            }
+
+            serverConsole() << "[TCP] Erreur lors de l'envoi au client " << clientId
+                          << ". Code d'erreur : " << errCode << endl;
+            return;
+        }
+
+        if (bytesSent == 0) {
+            serverConsole() << "[TCP] send() pour client " << clientId << " a envoyé 0 octets. Socket fermée ?" << endl;
+            return;
+        }
+
+        totalBytesSent += bytesSent;
+    }
+
+    serverConsole() << "[TCP] Message envoyé à client " << clientId << " (" << totalBytesSent << " octets)." << endl;
 }

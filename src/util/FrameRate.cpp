@@ -1,30 +1,34 @@
-//
-// Created by NavKav on 27/10/2022.
-//
-
 #include "FrameRate.h"
 
 using namespace std;
 
 FrameRate::FrameRate() {
     gettimeofday(&_tp, NULL);
-    _currentTime = _tp.tv_sec * 1000 + _tp.tv_usec / 1000;
+    _lastTime = _tp.tv_sec * 1000 + _tp.tv_usec / 1000;
 }
 
-void FrameRate::display(Window& window) {
+void FrameRate::display() {
     gettimeofday(&_tp, NULL);
-    time_t t = _tp.tv_sec * 1000 + _tp.tv_usec / 1000;
+    time_t currentTime = _tp.tv_sec * 1000 + _tp.tv_usec / 1000;
+    
+    time_t elapsedTime = currentTime - _lastTime;
 
-    int newValue = int(1000. / double(t - _currentTime));
+    int newValue = 0;
+    if (elapsedTime > 0) {
+        newValue = static_cast<int>(1000.0 / static_cast<double>(elapsedTime));
+    } else {
+        newValue = _previousValue; // Ou une valeur par défaut, car la division est impossible
+    }
 
-    if (newValue > _previousValue - GAP && newValue < _previousValue + GAP) {
+    if (abs(newValue - _previousValue) < GAP) {
         newValue = _previousValue;
     }
-        window.drawOn(DEFAULT);
-    window.changeTextColor(255, 255, 255);
-        window.changeFont("arial", 20);
-        window.writeText(0, 0 , to_string(newValue) + " fps");
+    
+    window().drawOn(DEFAULT);
+    window().changeTextColor(255, 255, 255);
+    window().changeFont("arial", 20);
+    window().writeText(0, 0 , to_string(newValue) + " fps");
 
-    _currentTime = t;
+    _lastTime = currentTime;
     _previousValue = newValue;
 }

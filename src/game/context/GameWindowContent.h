@@ -8,13 +8,13 @@
 #include <cstdlib>
 
 #include "core/WindowContent.h"
-#include "game/context/Game.h"
+#include "game/context/GameView.h"
 
 class GameWindowContent : public WindowContent {
 public :
     void process() override;
 private :
-    Game _game;
+    GameView _game;
 
 };
 

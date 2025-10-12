@@ -1,14 +1,17 @@
 cmake_minimum_required(VERSION 3.9)
 project(STSalike CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}-static-libgcc -static-libstdc++")
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF) # Bonne pratique pour un code standard
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}-static-libgcc")
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-dev") #Affiche TOUS les warnings en mode debug
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -O3")
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/SDL2/cmake") #chemin pour accéder au fichier cmake
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-dev") # Affiche TOUS les warnings en mode debug
+set(CMAKE_CXX_FLAGS "-O3") # Définit l'optimisation pour la version de publication
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g") # Définit le débogage pour la version de débogage
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/SDL2/cmake")
 #qui vont trouver les différents fichiers nécessaire pour utiliser SDL2
-
 
 set(SDL2_IMAGE_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/SDL2/include")
 set(SDL2_IMAGE_LIBRARY "${PROJECT_SOURCE_DIR}/SDL2/lib/libSDL2_image.dll.a")
@@ -30,16 +33,31 @@ file(GLOB_RECURSE SOURCES
         src/*/*/*.cpp
         src/*/*/*/*.cpp
         src/*/*/*/*/*.cpp
-        )
+)
 
 add_executable(STSalike ${SOURCES}
         src/game/menu/MenuWindowContent.cpp
         src/game/menu/MenuWindowContent.h
         src/util/OSCommandDependencies.h
-        src/online/ClientSocket.cpp
-        src/online/ClientSocket.h
+        src/online/ClientSession.cpp
+        src/online/ClientSession.h
         src/online/Server.h
+        src/game/context/GameModel.cpp
+        src/game/context/GameModel.h
+        src/game/map/MapModel.cpp
+        src/game/map/MapModel.h
+        src/online/ServerConsole.h
+        src/util/ThreadPool.h
+        src/online/GameMessage.h
+        src/game/Player/Player.cpp
+        src/game/Player/Player.h
+        src/online/Serializer.h
+        src/game/map/MapView.cpp
+        src/game/map/MapView.h
 )
+
+set_property(TARGET STSalike PROPERTY WIN32_EXECUTABLE OFF)
+
 #TFF
 include_directories(${PROJECT_SOURCE_DIR}/src ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR}) #inclusion des dossier nécessaire pour le
 #développement avec SDL2

@@ -9,9 +9,16 @@
 #include <unordered_map>
 #include <iostream>
 #include "SDL2/SDL.h"
-#include "SDL_image.h"
-#include "SDL_ttf.h"
+#if defined(_WIN32)
+    #include "SDL_image.h"
+    #include "SDL_ttf.h"
+#else
+    #include "SDL2/SDL_image.h"
+    #include "SDL2/SDL_ttf.h"
+#endif
 
+class Window;
+Window& window();
 
 #define BACKGROUND (unsigned int)0
 #define DEFAULT (unsigned int)1
@@ -22,7 +29,9 @@ typedef std::unordered_map<string, SDL_Texture*> hashmap;
 
 class Window {
 public :
-    Window(const string &windowName, unsigned int sizeX, unsigned int sizeY);
+    Window(const Window&) = delete;
+    Window& operator=(const Window&) = delete;
+
     void setTitle(const string &windowTitle);
     void drawOn(unsigned int layer);
     void drawIMG(int x, int y, const string &name);
@@ -30,7 +39,6 @@ public :
     void debug();
     void drawPartIMG(int x, int y, unsigned int a, unsigned int b, unsigned int c, unsigned int d, const string &name);
     void refresh();
-    Window() = delete;
     ~Window();
     void clear();
     bool exists(std::string name) const;
@@ -44,7 +52,13 @@ public :
     void close();
     void drawLine(int a, int b, int c, int d);
     void clearBackground();
+
 private :
+    friend Window& window();
+    Window(const string &windowName, unsigned int sizeX, unsigned int sizeY);
+
+    static Window& getInstance();
+
     SDL_Texture* _backgroundTexture = nullptr;
     SDL_Texture* _defaultTexture = nullptr;
     SDL_Texture* _currentTexture = nullptr;
@@ -68,6 +82,8 @@ private :
 
 };
 
-inline Window window("STS Alike", 700, 700);
+inline Window& window() {
+    return Window::getInstance();
+}
 
 #endif //PROJECTTT_WINDOW_H

@@ -1,0 +1,124 @@
+//
+// Created by NavKav on 01/09/2025.
+//
+#ifndef SERIALIZER_H
+#define SERIALIZER_H
+
+#include <vector>
+#include <stdexcept>
+#include <cstring>
+#include <cstdint>
+#include <string>
+
+#include "OSMultiplayerDependencies.h"
+#include "GameMessage.h"
+#include "util/json.hpp"
+
+class Serializer;
+inline Serializer& serializer();
+
+template <typename T>
+concept JSONable = requires(T object) {
+    { nlohmann::json(object) };
+    { nlohmann::json().get<T>() };
+};
+
+class Serializer {
+public:
+    using SerializedBuffer = std::vector<char>;
+
+    Serializer(const Serializer&) = delete;
+    Serializer& operator=(const Serializer&) = delete;
+
+    template<JSONable T>
+    void serialize(const T& data, MessageType messageType) {
+        std::vector<uint8_t> msgpack_buffer = nlohmann::json::to_msgpack(data);
+
+        MessageHeader header;
+        header.type = messageType;
+        header.size = htonl(static_cast<uint32_t>(msgpack_buffer.size()));
+
+        _buffer.insert(_buffer.end(), reinterpret_cast<char*>(&header), reinterpret_cast<char*>(&header) + sizeof(MessageHeader));
+        _buffer.insert(_buffer.end(), msgpack_buffer.begin(), msgpack_buffer.end());
+    }
+
+    void loadBuffer(const std::vector<char>& buffer) {
+        _buffer = buffer;
+        _offset = 0;
+    }
+
+    template<JSONable T>
+    bool deserialize(T& data, MessageType& messageType) {
+        if (_offset + sizeof(MessageHeader) > _buffer.size()) {
+            return false;
+        }
+
+        MessageHeader header{};
+        std::memcpy(&header, _buffer.data() + _offset, sizeof(MessageHeader));
+        _offset += sizeof(MessageHeader);
+
+        auto type = header.type;
+        uint32_t size = ntohl(header.size);
+
+        if (_offset + size > _buffer.size()) {
+            _offset -= sizeof(MessageHeader);
+            return false;
+        }
+
+        std::vector<uint8_t> msgpack_buffer(_buffer.data() + _offset, _buffer.data() + _offset + size);
+        _offset += size;
+
+        try {
+            nlohmann::json j = nlohmann::json::from_msgpack(msgpack_buffer);
+            data = j.get<T>();
+            messageType = type;
+            return true;
+        } catch (const nlohmann::json::exception& e) {
+            std::cerr << "Erreur de deserialisation: " << e.what() << std::endl;
+            return false;
+        }
+    }
+
+    template<JSONable T>
+    bool deserialize(T& data, const std::vector<char>& payload) {
+        try {
+            nlohmann::json j = nlohmann::json::from_msgpack(payload);
+            data = j.get<T>();
+            return true;
+        } catch (const nlohmann::json::exception& e) {
+            std::cerr << "Erreur de deserialisation: " << e.what() << std::endl;
+            return false;
+        }
+    }
+
+    void clear() {
+        _buffer.clear();
+        _offset = 0;
+    }
+
+    const std::vector<char>& getBuffer() {
+        return _buffer;
+    }
+
+    bool hasMoreData() const {
+        return _offset < _buffer.size();
+    }
+
+private:
+    Serializer() = default;
+    friend inline Serializer& serializer();
+
+    static Serializer& getInstance() {
+        static Serializer instance;
+        return instance;
+    }
+
+    std::vector<char> _buffer;
+    size_t _offset = 0;
+};
+
+inline Serializer& serializer() {
+    return Serializer::getInstance();
+}
+
+#endif // SERIALIZER_H

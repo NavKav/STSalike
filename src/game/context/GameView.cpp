@@ -4,6 +4,7 @@
 
 #include "GameView.h"
 
+#include "core/User.h"
 
 
 using namespace std;
@@ -25,28 +26,49 @@ void GameView::process() {
     window().clearBackground();
 
     /*************************************************************************/
-    /************************** UNITS TESTS  *********************************/
-    /*************************************************************************/
-
-
-
-    /*************************************************************************/
     /************************** DISPLAY **************************************/
     /*************************************************************************/
 
+    // === Contrôle caméra (en pixels) ===
+    static int camPx = 0;
+    static int camPy = 0;
+    const int step = 50;
+
+    if (user()[SDL_SCANCODE_LEFT].pressed)  camPx -= step;
+    if (user()[SDL_SCANCODE_RIGHT].pressed) camPx += step;
+    if (user()[SDL_SCANCODE_UP].pressed)    camPy -= step;
+    if (user()[SDL_SCANCODE_DOWN].pressed)  camPy += step;
+
+    _mapView.setCameraCenter(camPx, camPy); // caméra en PIXELS
+
     _mapView.displayMap();
 
-    _frameRate.display();
     window().refresh();
 
-    /*if (user()[SDL_SCANCODE_SPACE].pressed) {
-        _client.sendTCP("a appuye sur espace");
-    }
-    if (user()[SDL_SCANCODE_Q].pressed) {
-        _client.sendUDP("hello world");
-    }*/
-
     processGameMessage();
+
+
+    /*
+    // Personnage qui se déplace sur une map
+
+    static int paladinX = window().getX() / 2;
+    static int paladinY = window().getY() / 2;
+
+    window().drawIMG(0, 0, "image/fond.bmp");
+
+    if (user()[SDL_SCANCODE_LEFT].pressed)
+        paladinX -= 50;
+    if (user()[SDL_SCANCODE_RIGHT].pressed)
+        paladinX += 50;
+    if (user()[SDL_SCANCODE_UP].pressed)
+        paladinY -= 50;
+    if (user()[SDL_SCANCODE_DOWN].pressed)
+        paladinY += 50;
+
+    window().drawIMG(paladinX, paladinY, "image/unit/paladin.png");
+
+    window().refresh(); // une fois que l'on a dessiné des images sur la fenêtre, on
+                      // rafraîchit celle-ci pour les voir.*/
 }
 
 void GameView::processGameMessage() {

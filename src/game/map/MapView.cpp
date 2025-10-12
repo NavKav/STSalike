@@ -18,31 +18,73 @@ Node* MapView::getNode(int x, int y) {
     return nullptr;
 }
 
+
+/* Dessine les images selon la hauteur du neoud correspondant */
+static void drawImageFromHeight(float height, int px, int py) {
+    if (height < 0.1f) {
+        window().drawIMG(px, py, "image/star.png");
+    } else {
+        window().drawIMG(px, py, "image/tree.png");
+    }
+}
+
+/* setter et getter de MapView */
+void MapView::setCameraCenter(int cx, int cy)
+{
+    _camX = cx;
+    _camY = cy;
+}
+
+std::pair<int,int> MapView::getCameraCenter() const
+{
+    return {_camX, _camY};
+}
+
 void MapView::displayMap() {
+
+    /* paramètres */
     int radius = 70;
-    Coords origin = {0, 0};
+    int X = window().getX(), Y = window().getY();
+    int halfX = X/2, halfY = Y/2;
+    const int tile = 50; /* espace entre les noeuds ?*/
+    const int spriteHalf = 16; /* taille de l'image */
+    const int camX = getCameraCenter().first;
+    const int camY = getCameraCenter().second;
+    Coords origin = {camX/tile, camY/tile};
+
+
     for (int x = -radius; x <= radius; x++) {
         for (int y = -radius; y <= radius; y++) {
             Coords currentCoords = {origin.x + x, origin.y + y};
             int distance_squared = x*x + y*y;
-            int X = window().getX(), Y = window().getY();
 
             if (distance_squared <= radius * radius) {
                 auto it = _knownNodes.find(currentCoords);
-                if (it != nullptr && it->second->edges) {
-                    Node foundNode = *(it->second);
-                    window().writeText(X/2 + 50 * foundNode.x - 7, Y/2 + 50 * foundNode.y - 7, "N");
-                    window().changeDrawColor(0,0,0,255);
-                    bitset<8> bits((uint8_t)foundNode.edges);
-                    for (int i = 0; i < bits.size(); ++i) {
-                        if (bits.test(i)) {
-                            window().drawLine(X/2 + 50 * foundNode.x
-                                              , Y/2 + 50 * foundNode.y
-                                              , X/2 + 50 * (foundNode.x + MapModel::_neighborOffsets[i].x)
-                                              , Y/2 + 50 * (foundNode.y + MapModel::_neighborOffsets[i].y)
-                                              );
-                        }
-                    }
+
+                if (it == _knownNodes.end() || !it->second) {
+                    continue;
+                }
+
+                Node foundNode = *(it->second);
+                if (!foundNode.edges) continue;
+
+                int px = halfX + (tile * foundNode.x - camX) - spriteHalf;
+                int py = halfY + (tile * foundNode.y - camY) - spriteHalf;
+
+                drawImageFromHeight(foundNode.height, px, py);
+
+                // ------------------------------------
+                int cx = halfX + (tile * foundNode.x - camX);
+                int cy = halfY + (tile * foundNode.y - camY);
+
+                std::bitset<8> bits((uint8_t)foundNode.edges);
+                for (int i = 0; i < (int)bits.size(); ++i) {
+                    if (!bits.test(i)) continue;
+
+                    int nx = halfX + (tile * foundNode.x + MapModel::_neighborOffsets[i].x - camX);
+                    int ny = halfY + (tile * foundNode.y + MapModel::_neighborOffsets[i].y - camY);
+
+                    window().drawLine(cx, cy, nx, ny);
                 }
             }
         }

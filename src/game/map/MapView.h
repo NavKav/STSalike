@@ -17,10 +17,14 @@ public :
     void addNode(int x, int y, Node node);
     Node* getNode(int x, int y);
     void displayMap();
+    void setCameraCenter(int cx, int cy);
+    std::pair<int,int> getCameraCenter() const;
+
 
 private:
     std::unordered_map<Coords, std::unique_ptr<Node>, CoordsHash> _knownNodes;
-
+    int _camX = 0;
+    int _camY = 0;
 };
 
 

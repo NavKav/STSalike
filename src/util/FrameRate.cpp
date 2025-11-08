@@ -23,8 +23,6 @@ void FrameRate::display() {
     if (abs(newValue - _previousValue) < GAP) {
         newValue = _previousValue;
     }
-    
-    window().drawOn(DEFAULT);
     window().changeTextColor(255, 255, 255);
     window().changeFont("arial", 20);
     window().writeText(0, 0 , to_string(newValue) + " fps");

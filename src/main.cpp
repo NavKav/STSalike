@@ -44,9 +44,6 @@ int main(int argc, char *argv[])
 //
 
     if (argc == 2 && !strcmp(argv[1], "_server")) {
-        window().close();
-        user().close();
-
         Server server(1998);
         server.start();
 
@@ -79,5 +76,11 @@ int main(int argc, char *argv[])
         user().setWindowContent(new GameWindowContent());
         user().start();
     }
+//
+//------------------------------------------------------------------------------------------------------
+//                            SORTIE DU PROGRAMME
+//------------------------------------------------------------------------------------------------------
+//
+    window().shutdown();
     return EXIT_SUCCESS;
 }

@@ -54,6 +54,8 @@ add_executable(STSalike ${SOURCES}
         src/online/Serializer.h
         src/game/map/MapView.cpp
         src/game/map/MapView.h
+        src/core/Canvas.cpp
+        src/core/Canvas.h
 )
 
 set_property(TARGET STSalike PROPERTY WIN32_EXECUTABLE OFF)
